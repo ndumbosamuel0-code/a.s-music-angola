@@ -65,8 +65,12 @@ export function useSession() {
       const { data } = await supabase.auth.getUser();
       const user = data.user;
       if (!user) return { user: null, isAdmin: false };
-      const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", user.id);
-      return { user, isAdmin: !!roles?.some((r) => r.role === "admin") };
+      const { data: isAdmin, error } = await supabase.rpc("has_role", {
+        _user_id: user.id,
+        _role: "admin",
+      });
+      if (error) throw error;
+      return { user, isAdmin: !!isAdmin };
     },
   });
 }
