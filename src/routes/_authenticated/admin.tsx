@@ -266,7 +266,7 @@ function ReportsAdmin() {
   const share = Number(settings.data?.platform_share ?? 10);
   async function add(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault(); const fd = new FormData(e.currentTarget);
-    err((await supabase.from("financial_reports").insert({ artist_id: String(fd.get("artist")), period: String(fd.get("period")), gross: Number(fd.get("gross")), distributor_commission_pct: Number(fd.get("pct")), is_demo: fd.get("demo") === "on" })).error, "Relatório criado.");
+    err((await supabase.from("financial_reports").insert({ artist_id: String(fd.get("artist")), period: String(fd.get("period")), gross: Number(fd.get("gross")), distributor_commission_pct: Number(fd.get("pct")), is_demo: true })).error, "Simulação criada.");
     refresh();
   }
   return (
@@ -277,12 +277,12 @@ function ReportsAdmin() {
         <Input name="period" placeholder="Período (2026-10)" required className="w-36" />
         <Input name="gross" type="number" placeholder="Bruto (Kz)" required className="w-36" />
         <Input name="pct" type="number" placeholder="Comissão %" defaultValue={Number(settings.data?.distributor_commission ?? 0)} className="w-28" />
-        <label className="flex items-center gap-2 text-sm"><input type="checkbox" name="demo" defaultChecked /> Demonstração</label>
-        <Button variant="gold">Criar</Button>
+        <span className="text-xs text-muted-foreground">Todos os relatórios são simulações, sem pagamento.</span>
+        <Button variant="gold">Criar simulação</Button>
       </form>
       <div className="overflow-x-auto rounded-xl border border-border">
         <table className="w-full text-sm">
-          <thead className="bg-secondary text-left"><tr>{["Artista", "Período", "Bruto", "Com. distribuidor", "Após comissão", `A.S MUSIC ${share}%`, `Artista ${100 - share}%`, "Estado"].map((h) => <th key={h} className="p-3 font-medium">{h}</th>)}</tr></thead>
+          <thead className="bg-secondary text-left"><tr>{["Artista", "Período", "Bruto", "Com. distribuidor", "Após comissão", `A.S MUSIC ${share}%`, `Artista ${100 - share}%`, "Modalidade"].map((h) => <th key={h} className="p-3 font-medium">{h}</th>)}</tr></thead>
           <tbody>
             {list.data?.map((r) => {
               const x = splitRevenue(Number(r.gross), Number(r.distributor_commission_pct), share);
@@ -292,11 +292,7 @@ function ReportsAdmin() {
                   <td className="p-3">{r.period}</td><td className="p-3">{formatKz(x.gross)}</td>
                   <td className="p-3">{formatKz(x.commission)} ({r.distributor_commission_pct}%)</td>
                   <td className="p-3">{formatKz(x.afterCommission)}</td><td className="p-3">{formatKz(x.platform)}</td><td className="p-3">{formatKz(x.artist)}</td>
-                  <td className="p-3">
-                    <select className={sel} value={r.payment_status} aria-label="Estado de pagamento" onChange={async (e) => { err((await supabase.from("financial_reports").update({ payment_status: e.target.value as "pendente" | "pago" }).eq("id", r.id)).error); refresh(); }}>
-                      <option value="pendente">Pendente</option><option value="pago">Pago</option>
-                    </select>
-                  </td>
+                  <td className="p-3"><Badge variant="outline">Simulação · sem pagamento</Badge></td>
                 </tr>
               );
             })}
