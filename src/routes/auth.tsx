@@ -38,8 +38,13 @@ function AuthPage() {
       navigate({ to: "/painel" });
     } else {
       const { error } = await supabase.auth.signUp({
-        email, password,
-        options: { emailRedirectTo: window.location.origin, data: { display_name: name } },
+        email,
+        password,
+        options: {
+          emailRedirectTo: window.location.origin,
+          // The database trigger reads full_name from raw_user_meta_data.
+          data: { full_name: name },
+        },
       });
       setLoading(false);
       if (error) { toast.error(error.message); return; }
