@@ -28,3 +28,7 @@ use the editor.
   own key and store it in Secrets.
 - **Secrets.** Lovable manages them. Do not put secret values in the repo.
 <!-- LOVABLE:END -->
+
+## Application architecture
+
+- Enforce streaming, cover visibility, and demo-only report invariants in database functions and triggers, not only in React, so direct API writes cannot bypass rights and simulation rules.

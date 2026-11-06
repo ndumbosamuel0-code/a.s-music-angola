@@ -15,7 +15,12 @@ import { useGenres } from "@/lib/data";
 import { formatKz, splitRevenue } from "@/lib/finance";
 
 export const Route = createFileRoute("/_authenticated/painel")({
-  head: () => ({ meta: [{ title: "A minha conta — A.S MUSIC" }, { name: "description", content: "Perfil, submissões e relatórios do artista." }] }),
+  head: () => ({ meta: [
+    { title: "A minha conta — A.S MUSIC" },
+    { name: "description", content: "Perfil, submissões e simulações financeiras do artista na A.S MUSIC." },
+    { property: "og:title", content: "A minha conta — A.S MUSIC" },
+    { property: "og:description", content: "Área pessoal para submeter música e acompanhar a revisão." },
+  ] }),
   component: Painel,
 });
 

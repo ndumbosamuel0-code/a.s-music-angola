@@ -20,7 +20,12 @@ export const Route = createFileRoute("/_authenticated/admin")({
     const { data } = await supabase.rpc("has_role", { _user_id: context.user.id, _role: "admin" });
     if (!data) throw redirect({ to: "/painel" });
   },
-  head: () => ({ meta: [{ title: "Administração — A.S MUSIC" }, { name: "description", content: "Painel de administração A.S MUSIC." }] }),
+  head: () => ({ meta: [
+    { title: "Administração — A.S MUSIC" },
+    { name: "description", content: "Revisão de faixas, artistas, direitos e simulações financeiras na A.S MUSIC." },
+    { property: "og:title", content: "Administração — A.S MUSIC" },
+    { property: "og:description", content: "Gestão interna do catálogo e dos direitos A.S MUSIC." },
+  ] }),
   component: Admin,
 });
 
