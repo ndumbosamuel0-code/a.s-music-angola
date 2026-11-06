@@ -124,7 +124,7 @@ function RootComponent() {
     const { data } = supabase.auth.onAuthStateChange((event) => {
       if (event !== "SIGNED_IN" && event !== "SIGNED_OUT" && event !== "USER_UPDATED") return;
       router.invalidate();
-      queryClient.invalidateQueries({ queryKey: ["session"] });
+      if (event !== "SIGNED_OUT") queryClient.invalidateQueries({ queryKey: ["session"] });
     });
     return () => data.subscription.unsubscribe();
   }, [router, queryClient]);

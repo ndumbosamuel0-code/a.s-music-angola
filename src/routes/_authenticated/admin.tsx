@@ -83,7 +83,7 @@ function Overview() {
   );
 }
 
-type AdminTrack = { id: string; title: string; artist_name: string; status: string; featured: boolean; download_allowed: boolean; license_id: string | null; is_demo: boolean; audio_path: string | null; rights_holders: string | null; consent_download: boolean; consent_streaming: boolean; artist_id: string | null; admin_notes: string | null };
+type AdminTrack = { id: string; title: string; artist_name: string; status: Database["public"]["Enums"]["track_status"]; featured: boolean; download_allowed: boolean; license_id: string | null; is_demo: boolean; audio_path: string | null; rights_holders: string | null; consent_download: boolean; consent_streaming: boolean; artist_id: string | null; admin_notes: string | null };
 
 function TracksAdmin({ onlyPending }: { onlyPending?: boolean }) {
   const refresh = useRefresh();
@@ -206,7 +206,8 @@ function LicensesAdmin() {
   const [busy, setBusy] = useState(false);
   async function add(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault(); setBusy(true);
-    const fd = new FormData(e.currentTarget);
+    const form = e.currentTarget;
+    const fd = new FormData(form);
     let evidence_path: string | null = null;
     const file = fd.get("evidence") as File;
     if (file?.size) {
@@ -221,7 +222,7 @@ function LicensesAdmin() {
       starts_at: (fd.get("starts_at") as string) || null, ends_at: (fd.get("ends_at") as string) || null,
       notes: String(fd.get("notes") || ""), evidence_path,
     });
-    setBusy(false); err(error, "Licença registada."); if (!error) e.currentTarget.reset(); refresh();
+    setBusy(false); err(error, "Licença registada."); if (!error) form.reset(); refresh();
   }
   async function setStatus(id: string, verification_status: "pending" | "verified" | "rejected") { err((await supabase.from("licenses").update({ verification_status }).eq("id", id)).error); refresh(); }
   async function openDoc(p: string) { const { data } = await supabase.storage.from("license-docs").createSignedUrl(p, 300); if (data) window.open(data.signedUrl, "_blank"); }
