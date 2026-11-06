@@ -115,7 +115,9 @@ function TracksAdmin({ onlyPending }: { onlyPending?: boolean }) {
   if (!tracks.data?.length) return <div className="mt-4"><EmptyState title={onlyPending ? "Sem submissões pendentes." : "Catálogo vazio."} /></div>;
   return (
     <div className="mt-4 space-y-3">
-      {tracks.data.map((t) => (
+      {tracks.data.map((t) => {
+        const license = licenses.data?.find((l) => l.id === t.license_id);
+        return (
         <div key={t.id} className="space-y-3 rounded-xl border border-border bg-card p-4">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div>
@@ -134,17 +136,18 @@ function TracksAdmin({ onlyPending }: { onlyPending?: boolean }) {
               {artists.data?.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
             </select>
             <label className="flex items-center gap-2">Destaque <Switch checked={t.featured} onCheckedChange={(v) => update(t.id, { featured: v })} /></label>
-            <label className="flex items-center gap-2">Download <Switch checked={t.download_allowed} onCheckedChange={(v) => update(t.id, { download_allowed: v })} /></label>
+            <label className="flex items-center gap-2" title="Exige faixa aprovada, consentimento e licença de download válida">Download <Switch checked={t.download_allowed} disabled={!t.download_allowed && !canDownloadTrack(t, license)} onCheckedChange={(v) => update(t.id, { download_allowed: v })} /></label>
             {t.audio_path && <Button size="sm" variant="ghost" onClick={() => listen(t.audio_path!)}>Ouvir</Button>}
           </div>
           <div className="flex flex-wrap gap-2">
-            <Button size="sm" variant="gold" onClick={() => update(t.id, { status: "approved" })}>Aprovar</Button>
+            <Button size="sm" variant="gold" disabled={!canApproveTrack(t, license)} title="Exige direitos, consentimento e licença de streaming válidos" onClick={() => update(t.id, { status: "approved" })}>Aprovar</Button>
             <Button size="sm" variant="silver" onClick={() => update(t.id, { status: "rejected" })}>Rejeitar</Button>
             <Button size="sm" variant="ghost" onClick={() => { const v = prompt("Novo título", t.title); if (v) update(t.id, { title: v }); }}>Editar título</Button>
             <Button size="sm" variant="ghost" onClick={() => update(t.id, { status: "removed", featured: false })}>Remover</Button>
           </div>
         </div>
-      ))}
+        );
+      })}
       <p className="text-xs text-muted-foreground">A aprovação e o download são bloqueados pela base de dados quando a licença não está verificada.</p>
     </div>
   );
