@@ -13,6 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 import { useGenres } from "@/lib/data";
 import { formatKz, splitRevenue } from "@/lib/finance";
+import { canApproveTrack, canDownloadTrack } from "@/lib/rights";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   // UI guard only; every write is enforced by RLS + database triggers.
@@ -89,16 +90,16 @@ function Overview() {
   );
 }
 
-type AdminTrack = { id: string; title: string; artist_name: string; status: Database["public"]["Enums"]["track_status"]; featured: boolean; download_allowed: boolean; license_id: string | null; is_demo: boolean; audio_path: string | null; rights_holders: string | null; consent_download: boolean; consent_streaming: boolean; artist_id: string | null; admin_notes: string | null };
+type AdminTrack = { id: string; title: string; artist_name: string; status: Database["public"]["Enums"]["track_status"]; featured: boolean; download_allowed: boolean; license_id: string | null; is_demo: boolean; audio_path: string | null; rights_holders: string | null; rights_confirmed: boolean; consent_download: boolean; consent_streaming: boolean; artist_id: string | null; admin_notes: string | null };
 
 function TracksAdmin({ onlyPending }: { onlyPending?: boolean }) {
   const refresh = useRefresh();
   const tracks = useAdmin<AdminTrack[]>(onlyPending ? "pending" : "tracks", () => {
-    let q = supabase.from("tracks").select("id,title,artist_name,status,featured,download_allowed,license_id,is_demo,audio_path,rights_holders,consent_download,consent_streaming,artist_id,admin_notes").order("created_at", { ascending: false });
+    let q = supabase.from("tracks").select("id,title,artist_name,status,featured,download_allowed,license_id,is_demo,audio_path,rights_holders,rights_confirmed,consent_download,consent_streaming,artist_id,admin_notes").order("created_at", { ascending: false });
     if (onlyPending) q = q.eq("status", "pending");
     return q;
   });
-  const licenses = useAdmin<{ id: string; holder: string; verification_status: string }[]>("licenses-min", () => supabase.from("licenses").select("id,holder,verification_status"));
+  const licenses = useAdmin<{ id: string; holder: string; verification_status: string; allows_streaming: boolean; allows_download: boolean; starts_at: string | null; ends_at: string | null }[]>("licenses-min", () => supabase.from("licenses").select("id,holder,verification_status,allows_streaming,allows_download,starts_at,ends_at"));
   const artists = useAdmin<{ id: string; name: string }[]>("artists-min", () => supabase.from("artists").select("id,name").order("name"));
 
   async function update(id: string, patch: Partial<AdminTrack>) {
