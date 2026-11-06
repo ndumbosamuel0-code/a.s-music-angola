@@ -211,7 +211,7 @@ function LicensesAdmin() {
     if (file?.size) {
       const path = `${crypto.randomUUID()}-${file.name.replace(/[^\w.-]/g, "_")}`;
       const { error } = await supabase.storage.from("license-docs").upload(path, file);
-      if (error) { setBusy(false); return toast.error(error.message); }
+      if (error) { setBusy(false); toast.error(error.message); return; }
       evidence_path = path;
     }
     const { error } = await supabase.from("licenses").insert({
@@ -317,7 +317,7 @@ function SettingsAdmin() {
   async function uploadLogo(file: File) {
     const path = `brand/logo-${Date.now()}-${file.name.replace(/[^\w.-]/g, "_")}`;
     const { error } = await supabase.storage.from("covers").upload(path, file);
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     err((await supabase.from("settings").update({ logo_url: path }).eq("id", 1)).error, "Logótipo oficial carregado.");
     qc.invalidateQueries({ queryKey: ["settings"] });
   }

@@ -16,6 +16,7 @@ import { Route as ContactoRouteImport } from './routes/contacto'
 import { Route as DistribuicaoRouteImport } from './routes/distribuicao'
 import { Route as ExplorarRouteImport } from './routes/explorar'
 import { Route as ParaArtistasRouteImport } from './routes/para-artistas'
+import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedPainelRouteImport } from './routes/_authenticated/painel'
 import { Route as ArtistaSlugRouteImport } from './routes/artista.$slug'
 import { Route as FaixaIdRouteImport } from './routes/faixa.$id'
@@ -54,6 +55,11 @@ const ParaArtistasRoute = ParaArtistasRouteImport.update({
   path: '/para-artistas',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedPainelRoute = AuthenticatedPainelRouteImport.update({
   id: '/painel',
   path: '/painel',
@@ -77,6 +83,7 @@ export interface FileRoutesByFullPath {
   '/distribuicao': typeof DistribuicaoRoute
   '/explorar': typeof ExplorarRoute
   '/para-artistas': typeof ParaArtistasRoute
+  '/admin': typeof AuthenticatedAdminRoute
   '/painel': typeof AuthenticatedPainelRoute
   '/artista/$slug': typeof ArtistaSlugRoute
   '/faixa/$id': typeof FaixaIdRoute
@@ -88,6 +95,7 @@ export interface FileRoutesByTo {
   '/distribuicao': typeof DistribuicaoRoute
   '/explorar': typeof ExplorarRoute
   '/para-artistas': typeof ParaArtistasRoute
+  '/admin': typeof AuthenticatedAdminRoute
   '/painel': typeof AuthenticatedPainelRoute
   '/artista/$slug': typeof ArtistaSlugRoute
   '/faixa/$id': typeof FaixaIdRoute
@@ -101,6 +109,7 @@ export interface FileRoutesById {
   '/distribuicao': typeof DistribuicaoRoute
   '/explorar': typeof ExplorarRoute
   '/para-artistas': typeof ParaArtistasRoute
+  '/_authenticated/admin': typeof AuthenticatedAdminRoute
   '/_authenticated/painel': typeof AuthenticatedPainelRoute
   '/artista/$slug': typeof ArtistaSlugRoute
   '/faixa/$id': typeof FaixaIdRoute
@@ -114,6 +123,7 @@ export interface FileRouteTypes {
     | '/distribuicao'
     | '/explorar'
     | '/para-artistas'
+    | '/admin'
     | '/painel'
     | '/artista/$slug'
     | '/faixa/$id'
@@ -125,6 +135,7 @@ export interface FileRouteTypes {
     | '/distribuicao'
     | '/explorar'
     | '/para-artistas'
+    | '/admin'
     | '/painel'
     | '/artista/$slug'
     | '/faixa/$id'
@@ -137,6 +148,7 @@ export interface FileRouteTypes {
     | '/distribuicao'
     | '/explorar'
     | '/para-artistas'
+    | '/_authenticated/admin'
     | '/_authenticated/painel'
     | '/artista/$slug'
     | '/faixa/$id'
@@ -205,6 +217,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ParaArtistasRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/admin': {
+      id: '/_authenticated/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AuthenticatedAdminRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/painel': {
       id: '/_authenticated/painel'
       path: '/painel'
@@ -230,10 +249,12 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
   AuthenticatedPainelRoute: typeof AuthenticatedPainelRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAdminRoute: AuthenticatedAdminRoute,
   AuthenticatedPainelRoute: AuthenticatedPainelRoute,
 }
 

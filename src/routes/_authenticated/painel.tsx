@@ -84,11 +84,11 @@ function SubmitForm({ userId }: { userId: string }) {
 
   async function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    if (!checks.rights) return toast.error("Tens de confirmar que controlas os direitos.");
+    if (!checks.rights) { toast.error("Tens de confirmar que controlas os direitos."); return; }
     const fd = new FormData(e.currentTarget);
     const audio = fd.get("audio") as File;
     const cover = fd.get("cover") as File;
-    if (!audio?.size) return toast.error("Escolhe o ficheiro de áudio.");
+    if (!audio?.size) { toast.error("Escolhe o ficheiro de áudio."); return; }
     setBusy(true);
     try {
       const audio_path = await upload("audio", audio);

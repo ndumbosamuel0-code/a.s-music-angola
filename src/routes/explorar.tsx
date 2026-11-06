@@ -5,12 +5,12 @@ import { EmptyState, TrackCard, TrackGridSkeleton } from "@/components/TrackCard
 import { supabase } from "@/integrations/supabase/client";
 import { TRACK_SELECT, useGenres, type TrackRow } from "@/lib/data";
 
-type Search = { q?: string; genero?: string };
+type Search = { q?: string | undefined; genero?: string | undefined };
 
 export const Route = createFileRoute("/explorar")({
   validateSearch: (s: Record<string, unknown>): Search => ({
-    q: typeof s.q === "string" && s.q ? s.q : undefined,
-    genero: typeof s.genero === "string" && s.genero ? s.genero : undefined,
+    q: typeof s["q"] === "string" && s["q"] ? (s["q"] as string) : undefined,
+    genero: typeof s["genero"] === "string" && s["genero"] ? (s["genero"] as string) : undefined,
   }),
   head: () => ({
     meta: [
