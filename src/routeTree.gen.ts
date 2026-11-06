@@ -10,33 +10,160 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as ContactoRouteImport } from './routes/contacto'
+import { Route as DistribuicaoRouteImport } from './routes/distribuicao'
+import { Route as ExplorarRouteImport } from './routes/explorar'
+import { Route as ParaArtistasRouteImport } from './routes/para-artistas'
+import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
+import { Route as AuthenticatedPainelRouteImport } from './routes/_authenticated/painel'
+import { Route as ArtistaSlugRouteImport } from './routes/artista.$slug'
+import { Route as FaixaIdRouteImport } from './routes/faixa.$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ContactoRoute = ContactoRouteImport.update({
+  id: '/contacto',
+  path: '/contacto',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DistribuicaoRoute = DistribuicaoRouteImport.update({
+  id: '/distribuicao',
+  path: '/distribuicao',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ExplorarRoute = ExplorarRouteImport.update({
+  id: '/explorar',
+  path: '/explorar',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ParaArtistasRoute = ParaArtistasRouteImport.update({
+  id: '/para-artistas',
+  path: '/para-artistas',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedPainelRoute = AuthenticatedPainelRouteImport.update({
+  id: '/painel',
+  path: '/painel',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const ArtistaSlugRoute = ArtistaSlugRouteImport.update({
+  id: '/artista/$slug',
+  path: '/artista/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FaixaIdRoute = FaixaIdRouteImport.update({
+  id: '/faixa/$id',
+  path: '/faixa/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/contacto': typeof ContactoRoute
+  '/distribuicao': typeof DistribuicaoRoute
+  '/explorar': typeof ExplorarRoute
+  '/para-artistas': typeof ParaArtistasRoute
+  '/admin': typeof AuthenticatedAdminRoute
+  '/painel': typeof AuthenticatedPainelRoute
+  '/artista/$slug': typeof ArtistaSlugRoute
+  '/faixa/$id': typeof FaixaIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/contacto': typeof ContactoRoute
+  '/distribuicao': typeof DistribuicaoRoute
+  '/explorar': typeof ExplorarRoute
+  '/para-artistas': typeof ParaArtistasRoute
+  '/admin': typeof AuthenticatedAdminRoute
+  '/painel': typeof AuthenticatedPainelRoute
+  '/artista/$slug': typeof ArtistaSlugRoute
+  '/faixa/$id': typeof FaixaIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/auth': typeof AuthRoute
+  '/contacto': typeof ContactoRoute
+  '/distribuicao': typeof DistribuicaoRoute
+  '/explorar': typeof ExplorarRoute
+  '/para-artistas': typeof ParaArtistasRoute
+  '/_authenticated/admin': typeof AuthenticatedAdminRoute
+  '/_authenticated/painel': typeof AuthenticatedPainelRoute
+  '/artista/$slug': typeof ArtistaSlugRoute
+  '/faixa/$id': typeof FaixaIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/contacto'
+    | '/distribuicao'
+    | '/explorar'
+    | '/para-artistas'
+    | '/admin'
+    | '/painel'
+    | '/artista/$slug'
+    | '/faixa/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/auth'
+    | '/contacto'
+    | '/distribuicao'
+    | '/explorar'
+    | '/para-artistas'
+    | '/admin'
+    | '/painel'
+    | '/artista/$slug'
+    | '/faixa/$id'
+  id:
+    | '__root__'
+    | '/'
+    | '/_authenticated'
+    | '/auth'
+    | '/contacto'
+    | '/distribuicao'
+    | '/explorar'
+    | '/para-artistas'
+    | '/_authenticated/admin'
+    | '/_authenticated/painel'
+    | '/artista/$slug'
+    | '/faixa/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  AuthRoute: typeof AuthRoute
+  ContactoRoute: typeof ContactoRoute
+  DistribuicaoRoute: typeof DistribuicaoRoute
+  ExplorarRoute: typeof ExplorarRoute
+  ParaArtistasRoute: typeof ParaArtistasRoute
+  ArtistaSlugRoute: typeof ArtistaSlugRoute
+  FaixaIdRoute: typeof FaixaIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +175,102 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/contacto': {
+      id: '/contacto'
+      path: '/contacto'
+      fullPath: '/contacto'
+      preLoaderRoute: typeof ContactoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/distribuicao': {
+      id: '/distribuicao'
+      path: '/distribuicao'
+      fullPath: '/distribuicao'
+      preLoaderRoute: typeof DistribuicaoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/explorar': {
+      id: '/explorar'
+      path: '/explorar'
+      fullPath: '/explorar'
+      preLoaderRoute: typeof ExplorarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/para-artistas': {
+      id: '/para-artistas'
+      path: '/para-artistas'
+      fullPath: '/para-artistas'
+      preLoaderRoute: typeof ParaArtistasRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/admin': {
+      id: '/_authenticated/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AuthenticatedAdminRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/painel': {
+      id: '/_authenticated/painel'
+      path: '/painel'
+      fullPath: '/painel'
+      preLoaderRoute: typeof AuthenticatedPainelRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/artista/$slug': {
+      id: '/artista/$slug'
+      path: '/artista/$slug'
+      fullPath: '/artista/$slug'
+      preLoaderRoute: typeof ArtistaSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/faixa/$id': {
+      id: '/faixa/$id'
+      path: '/faixa/$id'
+      fullPath: '/faixa/$id'
+      preLoaderRoute: typeof FaixaIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
+interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
+  AuthenticatedPainelRoute: typeof AuthenticatedPainelRoute
+}
+
+const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAdminRoute: AuthenticatedAdminRoute,
+  AuthenticatedPainelRoute: AuthenticatedPainelRoute,
+}
+
+const AuthenticatedRouteRouteWithChildren =
+  AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  AuthRoute: AuthRoute,
+  ContactoRoute: ContactoRoute,
+  DistribuicaoRoute: DistribuicaoRoute,
+  ExplorarRoute: ExplorarRoute,
+  ParaArtistasRoute: ParaArtistasRoute,
+  ArtistaSlugRoute: ArtistaSlugRoute,
+  FaixaIdRoute: FaixaIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

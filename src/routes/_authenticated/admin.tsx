@@ -1,0 +1,340 @@
+import { createFileRoute, redirect } from "@tanstack/react-router";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { EmptyState } from "@/components/TrackCard";
+import { supabase } from "@/integrations/supabase/client";
+import { useGenres } from "@/lib/data";
+import { formatKz, splitRevenue } from "@/lib/finance";
+
+export const Route = createFileRoute("/_authenticated/admin")({
+  // UI guard only; every write is enforced by RLS + database triggers.
+  beforeLoad: async ({ context }) => {
+    const { data } = await supabase.rpc("has_role", { _user_id: context.user.id, _role: "admin" });
+    if (!data) throw redirect({ to: "/painel" });
+  },
+  head: () => ({ meta: [{ title: "Administração — A.S MUSIC" }, { name: "description", content: "Painel de administração A.S MUSIC." }] }),
+  component: Admin,
+});
+
+const STATUS: Record<string, string> = { pending: "Pendente", approved: "Aprovada", rejected: "Rejeitada", removed: "Removida" };
+const sel = "h-9 rounded-md border border-input bg-background px-2 text-sm";
+
+function useAdmin<T>(key: string, fn: () => PromiseLike<{ data: T | null; error: unknown }>) {
+  return useQuery({ queryKey: ["admin", key], queryFn: async () => { const { data, error } = await fn(); if (error) throw error; return (data ?? []) as T; } });
+}
+function useRefresh() { const qc = useQueryClient(); return () => qc.invalidateQueries({ queryKey: ["admin"] }); }
+function err(e: { message: string } | null, ok = "Guardado.") { e ? toast.error(e.message) : toast.success(ok); }
+
+function Admin() {
+  return (
+    <div className="mx-auto max-w-6xl px-4 py-10">
+      <h1 className="text-3xl font-bold">Administração</h1>
+      <Tabs defaultValue="geral" className="mt-6">
+        <TabsList className="h-auto flex-wrap">
+          {[["geral", "Visão geral"], ["pendentes", "Pendentes"], ["catalogo", "Catálogo"], ["artistas", "Artistas"], ["generos", "Géneros"], ["direitos", "Direitos/licenças"], ["relatorios", "Relatórios"], ["definicoes", "Definições"]].map(([v, l]) => (
+            <TabsTrigger key={v} value={v}>{l}</TabsTrigger>
+          ))}
+        </TabsList>
+        <TabsContent value="geral"><Overview /></TabsContent>
+        <TabsContent value="pendentes"><TracksAdmin onlyPending /></TabsContent>
+        <TabsContent value="catalogo"><TracksAdmin /></TabsContent>
+        <TabsContent value="artistas"><ArtistsAdmin /></TabsContent>
+        <TabsContent value="generos"><GenresAdmin /></TabsContent>
+        <TabsContent value="direitos"><LicensesAdmin /></TabsContent>
+        <TabsContent value="relatorios"><ReportsAdmin /></TabsContent>
+        <TabsContent value="definicoes"><SettingsAdmin /></TabsContent>
+      </Tabs>
+    </div>
+  );
+}
+
+function Overview() {
+  const q = useQuery({
+    queryKey: ["admin", "overview"],
+    queryFn: async () => {
+      const c = async (t: "tracks" | "artists" | "licenses", f?: (q: any) => any) => {
+        let q: any = supabase.from(t).select("id", { count: "exact", head: true });
+        if (f) q = f(q);
+        return (await q).count ?? 0;
+      };
+      return {
+        pending: await c("tracks", (q) => q.eq("status", "pending")),
+        approved: await c("tracks", (q) => q.eq("status", "approved")),
+        artists: await c("artists"),
+        unverified: await c("licenses", (q) => q.neq("verification_status", "verified")),
+      };
+    },
+  });
+  const items = [["Submissões pendentes", q.data?.pending], ["Faixas aprovadas", q.data?.approved], ["Artistas", q.data?.artists], ["Licenças por verificar", q.data?.unverified]];
+  return (
+    <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      {items.map(([l, v]) => (
+        <div key={l as string} className="rounded-xl border border-border bg-card p-5"><p className="text-sm text-muted-foreground">{l}</p><p className="mt-2 font-display text-3xl text-gold">{v ?? "—"}</p></div>
+      ))}
+    </div>
+  );
+}
+
+type AdminTrack = { id: string; title: string; artist_name: string; status: string; featured: boolean; download_allowed: boolean; license_id: string | null; is_demo: boolean; audio_path: string | null; rights_holders: string | null; consent_download: boolean; consent_streaming: boolean; artist_id: string | null; admin_notes: string | null };
+
+function TracksAdmin({ onlyPending }: { onlyPending?: boolean }) {
+  const refresh = useRefresh();
+  const tracks = useAdmin<AdminTrack[]>(onlyPending ? "pending" : "tracks", () => {
+    let q = supabase.from("tracks").select("id,title,artist_name,status,featured,download_allowed,license_id,is_demo,audio_path,rights_holders,consent_download,consent_streaming,artist_id,admin_notes").order("created_at", { ascending: false });
+    if (onlyPending) q = q.eq("status", "pending");
+    return q;
+  });
+  const licenses = useAdmin<{ id: string; holder: string; verification_status: string }[]>("licenses-min", () => supabase.from("licenses").select("id,holder,verification_status"));
+  const artists = useAdmin<{ id: string; name: string }[]>("artists-min", () => supabase.from("artists").select("id,name").order("name"));
+
+  async function update(id: string, patch: Partial<AdminTrack>) {
+    const { error } = await supabase.from("tracks").update(patch).eq("id", id);
+    err(error); refresh();
+  }
+  async function listen(path: string) {
+    const { data } = await supabase.storage.from("audio").createSignedUrl(path, 600);
+    if (data) window.open(data.signedUrl, "_blank");
+  }
+
+  if (tracks.isLoading) return <div className="mt-4 h-32 animate-pulse rounded-xl bg-secondary" />;
+  if (!tracks.data?.length) return <div className="mt-4"><EmptyState title={onlyPending ? "Sem submissões pendentes." : "Catálogo vazio."} /></div>;
+  return (
+    <div className="mt-4 space-y-3">
+      {tracks.data.map((t) => (
+        <div key={t.id} className="space-y-3 rounded-xl border border-border bg-card p-4">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <p className="font-medium">{t.title} {t.is_demo && <Badge variant="outline">Demo</Badge>}</p>
+              <p className="text-xs text-muted-foreground">{t.artist_name} · Titulares: {t.rights_holders || "—"} · Consentimentos: {t.consent_streaming ? "streaming" : ""} {t.consent_download ? "download" : ""}</p>
+            </div>
+            <Badge variant={t.status === "approved" ? "default" : "secondary"}>{STATUS[t.status]}</Badge>
+          </div>
+          <div className="flex flex-wrap items-center gap-3 text-sm">
+            <select className={sel} value={t.license_id ?? ""} onChange={(e) => update(t.id, { license_id: e.target.value || null })} aria-label="Licença">
+              <option value="">Sem licença</option>
+              {licenses.data?.map((l) => <option key={l.id} value={l.id}>{l.holder} ({l.verification_status})</option>)}
+            </select>
+            <select className={sel} value={t.artist_id ?? ""} onChange={(e) => update(t.id, { artist_id: e.target.value || null })} aria-label="Perfil de artista">
+              <option value="">Sem perfil de artista</option>
+              {artists.data?.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
+            </select>
+            <label className="flex items-center gap-2">Destaque <Switch checked={t.featured} onCheckedChange={(v) => update(t.id, { featured: v })} /></label>
+            <label className="flex items-center gap-2">Download <Switch checked={t.download_allowed} onCheckedChange={(v) => update(t.id, { download_allowed: v })} /></label>
+            {t.audio_path && <Button size="sm" variant="ghost" onClick={() => listen(t.audio_path!)}>Ouvir</Button>}
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Button size="sm" variant="gold" onClick={() => update(t.id, { status: "approved" })}>Aprovar</Button>
+            <Button size="sm" variant="silver" onClick={() => update(t.id, { status: "rejected" })}>Rejeitar</Button>
+            <Button size="sm" variant="ghost" onClick={() => { const v = prompt("Novo título", t.title); if (v) update(t.id, { title: v }); }}>Editar título</Button>
+            <Button size="sm" variant="ghost" onClick={() => update(t.id, { status: "removed", featured: false })}>Remover</Button>
+          </div>
+        </div>
+      ))}
+      <p className="text-xs text-muted-foreground">A aprovação e o download são bloqueados pela base de dados quando a licença não está verificada.</p>
+    </div>
+  );
+}
+
+function ArtistsAdmin() {
+  const refresh = useRefresh();
+  const artists = useAdmin<any[]>("artists", () => supabase.from("artists").select("*").order("created_at", { ascending: false }));
+  const profiles = useAdmin<{ id: string; display_name: string | null; artist_name: string | null }[]>("profiles", () => supabase.from("profiles").select("id,display_name,artist_name"));
+  const [name, setName] = useState(""); const [province, setProvince] = useState("");
+  async function add(e: React.FormEvent) {
+    e.preventDefault();
+    const slug = name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") + "-" + Math.random().toString(36).slice(2, 6);
+    const { error } = await supabase.from("artists").insert({ name, province, slug });
+    err(error, "Artista criado."); setName(""); refresh();
+  }
+  async function patch(id: string, p: Record<string, unknown>) { err((await supabase.from("artists").update(p).eq("id", id)).error); refresh(); }
+  async function promote(userId: string) { err((await supabase.from("user_roles").insert({ user_id: userId, role: "artist" })).error, "Função de artista atribuída."); }
+  return (
+    <div className="mt-4 space-y-4">
+      <form onSubmit={add} className="flex flex-wrap gap-2 rounded-xl border border-border bg-card p-4">
+        <Input placeholder="Nome do artista" value={name} onChange={(e) => setName(e.target.value)} required className="max-w-xs" />
+        <Input placeholder="Província" value={province} onChange={(e) => setProvince(e.target.value)} className="max-w-xs" />
+        <Button variant="gold" type="submit">Adicionar artista</Button>
+      </form>
+      {artists.data?.map((a) => (
+        <div key={a.id} className="flex flex-wrap items-center gap-3 rounded-xl border border-border bg-card p-4 text-sm">
+          <span className="min-w-40 font-medium">{a.name} {a.is_demo && <Badge variant="outline">Demo</Badge>}</span>
+          <label className="flex items-center gap-2">Destaque <Switch checked={a.featured} onCheckedChange={(v) => patch(a.id, { featured: v })} /></label>
+          <select className={sel} value={a.owner_id ?? ""} onChange={(e) => { patch(a.id, { owner_id: e.target.value || null }); if (e.target.value) promote(e.target.value); }} aria-label="Conta associada">
+            <option value="">Sem conta associada</option>
+            {profiles.data?.map((p) => <option key={p.id} value={p.id}>{p.artist_name || p.display_name || p.id.slice(0, 8)}</option>)}
+          </select>
+          <Button size="sm" variant="ghost" onClick={async () => { if (confirm("Remover artista?")) { err((await supabase.from("artists").delete().eq("id", a.id)).error, "Removido."); refresh(); } }}>Remover</Button>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function GenresAdmin() {
+  const genres = useGenres(); const qc = useQueryClient(); const [name, setName] = useState("");
+  async function add(e: React.FormEvent) {
+    e.preventDefault();
+    const slug = name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-");
+    err((await supabase.from("genres").insert({ name, slug, sort: (genres.data?.length ?? 0) + 1 })).error, "Género adicionado.");
+    setName(""); qc.invalidateQueries({ queryKey: ["genres"] });
+  }
+  return (
+    <div className="mt-4 space-y-4">
+      <form onSubmit={add} className="flex gap-2"><Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Novo género" required className="max-w-xs" /><Button variant="gold">Adicionar</Button></form>
+      <div className="flex flex-wrap gap-2">
+        {genres.data?.map((g) => (
+          <span key={g.id} className="flex items-center gap-2 rounded-full border border-border px-3 py-1 text-sm">{g.name}
+            <button aria-label={`Remover ${g.name}`} className="text-muted-foreground hover:text-destructive" onClick={async () => { err((await supabase.from("genres").delete().eq("id", g.id)).error, "Removido."); qc.invalidateQueries({ queryKey: ["genres"] }); }}>×</button>
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function LicensesAdmin() {
+  const refresh = useRefresh();
+  const list = useAdmin<any[]>("licenses", () => supabase.from("licenses").select("*").order("created_at", { ascending: false }));
+  const [busy, setBusy] = useState(false);
+  async function add(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault(); setBusy(true);
+    const fd = new FormData(e.currentTarget);
+    let evidence_path: string | null = null;
+    const file = fd.get("evidence") as File;
+    if (file?.size) {
+      const path = `${crypto.randomUUID()}-${file.name.replace(/[^\w.-]/g, "_")}`;
+      const { error } = await supabase.storage.from("license-docs").upload(path, file);
+      if (error) { setBusy(false); toast.error(error.message); return; }
+      evidence_path = path;
+    }
+    const { error } = await supabase.from("licenses").insert({
+      holder: String(fd.get("holder")), territory: String(fd.get("territory") || "Angola"),
+      allows_streaming: fd.get("streaming") === "on", allows_download: fd.get("download") === "on",
+      starts_at: (fd.get("starts_at") as string) || null, ends_at: (fd.get("ends_at") as string) || null,
+      notes: String(fd.get("notes") || ""), evidence_path,
+    });
+    setBusy(false); err(error, "Licença registada."); if (!error) e.currentTarget.reset(); refresh();
+  }
+  async function setStatus(id: string, verification_status: "pending" | "verified" | "rejected") { err((await supabase.from("licenses").update({ verification_status }).eq("id", id)).error); refresh(); }
+  async function openDoc(p: string) { const { data } = await supabase.storage.from("license-docs").createSignedUrl(p, 300); if (data) window.open(data.signedUrl, "_blank"); }
+  return (
+    <div className="mt-4 space-y-4">
+      <form onSubmit={add} className="grid gap-3 rounded-xl border border-border bg-card p-4 sm:grid-cols-3">
+        <div className="space-y-1"><Label htmlFor="holder">Titular *</Label><Input id="holder" name="holder" required /></div>
+        <div className="space-y-1"><Label htmlFor="territory">Território</Label><Input id="territory" name="territory" defaultValue="Angola" /></div>
+        <div className="space-y-1"><Label htmlFor="evidence">Evidência / documento</Label><Input id="evidence" name="evidence" type="file" /></div>
+        <div className="space-y-1"><Label htmlFor="starts_at">Início</Label><Input id="starts_at" name="starts_at" type="date" /></div>
+        <div className="space-y-1"><Label htmlFor="ends_at">Fim (prazo)</Label><Input id="ends_at" name="ends_at" type="date" /></div>
+        <div className="space-y-1"><Label htmlFor="notes">Notas</Label><Input id="notes" name="notes" /></div>
+        <label className="flex items-center gap-2 text-sm"><input type="checkbox" name="streaming" /> Streaming</label>
+        <label className="flex items-center gap-2 text-sm"><input type="checkbox" name="download" /> Download</label>
+        <Button variant="gold" disabled={busy}>Registar licença</Button>
+      </form>
+      {!list.data?.length ? <EmptyState title="Nenhuma licença registada." text="Sem licença verificada, nenhuma faixa real pode ser publicada." /> : list.data.map((l) => (
+        <div key={l.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border bg-card p-4 text-sm">
+          <div>
+            <p className="font-medium">{l.holder} · {l.territory}</p>
+            <p className="text-xs text-muted-foreground">{l.allows_streaming ? "Streaming" : "Sem streaming"} · {l.allows_download ? "Download" : "Sem download"} · {l.starts_at ?? "—"} → {l.ends_at ?? "sem fim"}</p>
+          </div>
+          <div className="flex items-center gap-2">
+            {l.evidence_path && <Button size="sm" variant="ghost" onClick={() => openDoc(l.evidence_path)}>Ver documento</Button>}
+            <select className={sel} value={l.verification_status} onChange={(e) => setStatus(l.id, e.target.value as any)} aria-label="Estado de verificação">
+              <option value="pending">Por verificar</option><option value="verified">Verificada</option><option value="rejected">Rejeitada</option>
+            </select>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function ReportsAdmin() {
+  const refresh = useRefresh();
+  const list = useAdmin<any[]>("reports", () => supabase.from("financial_reports").select("*, artists(name)").order("period", { ascending: false }));
+  const artists = useAdmin<{ id: string; name: string }[]>("artists-min", () => supabase.from("artists").select("id,name").order("name"));
+  const settings = useQuery({ queryKey: ["settings"], queryFn: async () => (await supabase.from("settings").select("*").eq("id", 1).maybeSingle()).data });
+  const share = Number(settings.data?.platform_share ?? 10);
+  async function add(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault(); const fd = new FormData(e.currentTarget);
+    err((await supabase.from("financial_reports").insert({ artist_id: String(fd.get("artist")), period: String(fd.get("period")), gross: Number(fd.get("gross")), distributor_commission_pct: Number(fd.get("pct")), is_demo: fd.get("demo") === "on" })).error, "Relatório criado.");
+    refresh();
+  }
+  return (
+    <div className="mt-4 space-y-4">
+      <p className="rounded-lg bg-warning/10 p-3 text-sm text-warning">Relatórios informativos. Nenhum pagamento real é processado nesta fase. Proposta sujeita a contrato.</p>
+      <form onSubmit={add} className="flex flex-wrap items-end gap-2 rounded-xl border border-border bg-card p-4">
+        <select name="artist" className={sel} required aria-label="Artista"><option value="">Artista…</option>{artists.data?.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}</select>
+        <Input name="period" placeholder="Período (2026-10)" required className="w-36" />
+        <Input name="gross" type="number" placeholder="Bruto (Kz)" required className="w-36" />
+        <Input name="pct" type="number" placeholder="Comissão %" defaultValue={Number(settings.data?.distributor_commission ?? 0)} className="w-28" />
+        <label className="flex items-center gap-2 text-sm"><input type="checkbox" name="demo" defaultChecked /> Demonstração</label>
+        <Button variant="gold">Criar</Button>
+      </form>
+      <div className="overflow-x-auto rounded-xl border border-border">
+        <table className="w-full text-sm">
+          <thead className="bg-secondary text-left"><tr>{["Artista", "Período", "Bruto", "Com. distribuidor", "Após comissão", `A.S MUSIC ${share}%`, `Artista ${100 - share}%`, "Estado"].map((h) => <th key={h} className="p-3 font-medium">{h}</th>)}</tr></thead>
+          <tbody>
+            {list.data?.map((r) => {
+              const x = splitRevenue(Number(r.gross), Number(r.distributor_commission_pct), share);
+              return (
+                <tr key={r.id} className="border-t border-border">
+                  <td className="p-3">{r.artists?.name} {r.is_demo && <Badge variant="outline">Demo</Badge>}</td>
+                  <td className="p-3">{r.period}</td><td className="p-3">{formatKz(x.gross)}</td>
+                  <td className="p-3">{formatKz(x.commission)} ({r.distributor_commission_pct}%)</td>
+                  <td className="p-3">{formatKz(x.afterCommission)}</td><td className="p-3">{formatKz(x.platform)}</td><td className="p-3">{formatKz(x.artist)}</td>
+                  <td className="p-3">
+                    <select className={sel} value={r.payment_status} aria-label="Estado de pagamento" onChange={async (e) => { err((await supabase.from("financial_reports").update({ payment_status: e.target.value as "pendente" | "pago" }).eq("id", r.id)).error); refresh(); }}>
+                      <option value="pendente">Pendente</option><option value="pago">Pago</option>
+                    </select>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+function SettingsAdmin() {
+  const qc = useQueryClient();
+  const q = useQuery({ queryKey: ["settings"], queryFn: async () => (await supabase.from("settings").select("*").eq("id", 1).maybeSingle()).data });
+  const [form, setForm] = useState({ distributor_commission: 0, platform_share: 10, distribution_status: "" });
+  useEffect(() => { if (q.data) setForm({ distributor_commission: Number(q.data.distributor_commission), platform_share: Number(q.data.platform_share), distribution_status: q.data.distribution_status }); }, [q.data]);
+  async function save(e: React.FormEvent) {
+    e.preventDefault();
+    err((await supabase.from("settings").update({ ...form, updated_at: new Date().toISOString() }).eq("id", 1)).error);
+    qc.invalidateQueries({ queryKey: ["settings"] });
+  }
+  async function uploadLogo(file: File) {
+    const path = `brand/logo-${Date.now()}-${file.name.replace(/[^\w.-]/g, "_")}`;
+    const { error } = await supabase.storage.from("covers").upload(path, file);
+    if (error) { toast.error(error.message); return; }
+    err((await supabase.from("settings").update({ logo_url: path }).eq("id", 1)).error, "Logótipo oficial carregado.");
+    qc.invalidateQueries({ queryKey: ["settings"] });
+  }
+  return (
+    <div className="mt-4 grid gap-6 md:grid-cols-2">
+      <form onSubmit={save} className="space-y-4 rounded-xl border border-border bg-card p-6">
+        <h2 className="font-bold">Modelo financeiro (proposta)</h2>
+        <div className="space-y-1"><Label htmlFor="dc">Comissão efetiva do distribuidor (%)</Label><Input id="dc" type="number" step="0.01" min={0} max={100} value={form.distributor_commission} onChange={(e) => setForm({ ...form, distributor_commission: Number(e.target.value) })} /></div>
+        <div className="space-y-1"><Label htmlFor="ps">Percentagem A.S MUSIC sobre o saldo (%)</Label><Input id="ps" type="number" step="0.01" min={0} max={100} value={form.platform_share} onChange={(e) => setForm({ ...form, platform_share: Number(e.target.value) })} /></div>
+        <div className="space-y-1"><Label htmlFor="ds">Estado da distribuição (texto público)</Label><Input id="ds" value={form.distribution_status} onChange={(e) => setForm({ ...form, distribution_status: e.target.value })} /></div>
+        <Button variant="gold">Guardar definições</Button>
+      </form>
+      <div className="space-y-4 rounded-xl border border-border bg-card p-6">
+        <h2 className="font-bold">Logótipo oficial</h2>
+        <p className="text-sm text-muted-foreground">{q.data?.logo_url ? "Logótipo carregado. Podes substituí-lo." : "Ainda não foi carregado. O site mostra o nome “A.S MUSIC” em texto até lá."}</p>
+        <Input type="file" accept="image/png,image/svg+xml,image/webp,image/jpeg" aria-label="Carregar logótipo" onChange={(e) => e.target.files?.[0] && uploadLogo(e.target.files[0])} />
+      </div>
+    </div>
+  );
+}
