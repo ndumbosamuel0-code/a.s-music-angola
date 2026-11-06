@@ -25,6 +25,7 @@ export const Route = createFileRoute("/_authenticated/admin")({
 });
 
 const STATUS: Record<string, string> = { pending: "Pendente", approved: "Aprovada", rejected: "Rejeitada", removed: "Removida" };
+const ADMIN_TABS: [string, string][] = [["geral", "Visão geral"], ["pendentes", "Pendentes"], ["catalogo", "Catálogo"], ["artistas", "Artistas"], ["generos", "Géneros"], ["direitos", "Direitos/licenças"], ["relatorios", "Relatórios"], ["definicoes", "Definições"]];
 const sel = "h-9 rounded-md border border-input bg-background px-2 text-sm";
 
 function useAdmin<T>(key: string, fn: () => PromiseLike<{ data: T | null; error: unknown }>) {
@@ -39,7 +40,7 @@ function Admin() {
       <h1 className="text-3xl font-bold">Administração</h1>
       <Tabs defaultValue="geral" className="mt-6">
         <TabsList className="h-auto flex-wrap">
-          {[["geral", "Visão geral"], ["pendentes", "Pendentes"], ["catalogo", "Catálogo"], ["artistas", "Artistas"], ["generos", "Géneros"], ["direitos", "Direitos/licenças"], ["relatorios", "Relatórios"], ["definicoes", "Definições"]].map(([v, l]) => (
+          {ADMIN_TABS.map(([v, l]) => (
             <TabsTrigger key={v} value={v}>{l}</TabsTrigger>
           ))}
         </TabsList>
@@ -154,7 +155,7 @@ function ArtistsAdmin() {
     const { error } = await supabase.from("artists").insert({ name, province, slug });
     err(error, "Artista criado."); setName(""); refresh();
   }
-  async function patch(id: string, p: Record<string, unknown>) { err((await supabase.from("artists").update(p).eq("id", id)).error); refresh(); }
+  async function patch(id: string, p: Database["public"]["Tables"]["artists"]["Update"]) { err((await supabase.from("artists").update(p).eq("id", id)).error); refresh(); }
   async function promote(userId: string) { err((await supabase.from("user_roles").insert({ user_id: userId, role: "artist" })).error, "Função de artista atribuída."); }
   return (
     <div className="mt-4 space-y-4">
