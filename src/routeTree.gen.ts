@@ -10,33 +10,63 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ExplorarRouteImport } from './routes/explorar'
+import { Route as ArtistaSlugRouteImport } from './routes/artista.$slug'
+import { Route as FaixaIdRouteImport } from './routes/faixa.$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ExplorarRoute = ExplorarRouteImport.update({
+  id: '/explorar',
+  path: '/explorar',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ArtistaSlugRoute = ArtistaSlugRouteImport.update({
+  id: '/artista/$slug',
+  path: '/artista/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FaixaIdRoute = FaixaIdRouteImport.update({
+  id: '/faixa/$id',
+  path: '/faixa/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/explorar': typeof ExplorarRoute
+  '/artista/$slug': typeof ArtistaSlugRoute
+  '/faixa/$id': typeof FaixaIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/explorar': typeof ExplorarRoute
+  '/artista/$slug': typeof ArtistaSlugRoute
+  '/faixa/$id': typeof FaixaIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/explorar': typeof ExplorarRoute
+  '/artista/$slug': typeof ArtistaSlugRoute
+  '/faixa/$id': typeof FaixaIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths: '/' | '/explorar' | '/artista/$slug' | '/faixa/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to: '/' | '/explorar' | '/artista/$slug' | '/faixa/$id'
+  id: '__root__' | '/' | '/explorar' | '/artista/$slug' | '/faixa/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ExplorarRoute: typeof ExplorarRoute
+  ArtistaSlugRoute: typeof ArtistaSlugRoute
+  FaixaIdRoute: typeof FaixaIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +78,35 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/explorar': {
+      id: '/explorar'
+      path: '/explorar'
+      fullPath: '/explorar'
+      preLoaderRoute: typeof ExplorarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/artista/$slug': {
+      id: '/artista/$slug'
+      path: '/artista/$slug'
+      fullPath: '/artista/$slug'
+      preLoaderRoute: typeof ArtistaSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/faixa/$id': {
+      id: '/faixa/$id'
+      path: '/faixa/$id'
+      fullPath: '/faixa/$id'
+      preLoaderRoute: typeof FaixaIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ExplorarRoute: ExplorarRoute,
+  ArtistaSlugRoute: ArtistaSlugRoute,
+  FaixaIdRoute: FaixaIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
