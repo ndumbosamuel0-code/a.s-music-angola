@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
+import "@lovable.dev/cloud-auth-js/styles.css";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
@@ -47,10 +48,16 @@ function AuthPage() {
     }
   }
 
-  async function google() {
-    const r = await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin });
-    if (r.error) { toast.error("Não foi possível entrar com Google."); return; }
+  async function oauth(provider: "google" | "lovable") {
+    setLoading(true);
+    const r = await lovable.auth.signInWithOAuth(provider, { redirect_uri: window.location.origin });
+    if (r.error) {
+      setLoading(false);
+      toast.error(`Não foi possível entrar com ${provider === "google" ? "Google" : "Lovable"}.`);
+      return;
+    }
     if (r.redirected) return;
+    setLoading(false);
     navigate({ to: "/painel" });
   }
 
@@ -68,7 +75,10 @@ function AuthPage() {
           <Button type="submit" variant="gold" className="w-full" disabled={loading}>{loading ? "Aguarda…" : mode === "in" ? "Entrar" : "Criar conta"}</Button>
         </form>
         <div className="my-4 text-center text-xs text-muted-foreground">ou</div>
-        <Button type="button" variant="silver" className="w-full" onClick={google}>Continuar com Google</Button>
+        <div className="space-y-2">
+          <Button type="button" variant="silver" className="w-full" disabled={loading} onClick={() => oauth("google")}>Continuar com Google</Button>
+          <button type="button" className="lovable-auth-button w-full" disabled={loading} onClick={() => oauth("lovable")}>Continuar com Lovable</button>
+        </div>
         <button className="mt-6 w-full text-sm text-gold hover:underline" onClick={() => setMode(mode === "in" ? "up" : "in")}>
           {mode === "in" ? "Ainda não tens conta? Regista-te" : "Já tens conta? Entra"}
         </button>

@@ -10,8 +10,10 @@ import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { EmptyState } from "@/components/TrackCard";
 import { supabase } from "@/integrations/supabase/client";
+import type { Database } from "@/integrations/supabase/types";
 import { useGenres } from "@/lib/data";
 import { formatKz, splitRevenue } from "@/lib/finance";
+import { canApproveTrack, canDownloadTrack } from "@/lib/rights";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   // UI guard only; every write is enforced by RLS + database triggers.
@@ -19,11 +21,17 @@ export const Route = createFileRoute("/_authenticated/admin")({
     const { data } = await supabase.rpc("has_role", { _user_id: context.user.id, _role: "admin" });
     if (!data) throw redirect({ to: "/painel" });
   },
-  head: () => ({ meta: [{ title: "Administração — A.S MUSIC" }, { name: "description", content: "Painel de administração A.S MUSIC." }] }),
+  head: () => ({ meta: [
+    { title: "Administração — A.S MUSIC" },
+    { name: "description", content: "Revisão de faixas, artistas, direitos e simulações financeiras na A.S MUSIC." },
+    { property: "og:title", content: "Administração — A.S MUSIC" },
+    { property: "og:description", content: "Gestão interna do catálogo e dos direitos A.S MUSIC." },
+  ] }),
   component: Admin,
 });
 
 const STATUS: Record<string, string> = { pending: "Pendente", approved: "Aprovada", rejected: "Rejeitada", removed: "Removida" };
+const ADMIN_TABS: [string, string][] = [["geral", "Visão geral"], ["pendentes", "Pendentes"], ["catalogo", "Catálogo"], ["artistas", "Artistas"], ["generos", "Géneros"], ["direitos", "Direitos/licenças"], ["relatorios", "Relatórios"], ["definicoes", "Definições"]];
 const sel = "h-9 rounded-md border border-input bg-background px-2 text-sm";
 
 function useAdmin<T>(key: string, fn: () => PromiseLike<{ data: T | null; error: unknown }>) {
@@ -38,7 +46,7 @@ function Admin() {
       <h1 className="text-3xl font-bold">Administração</h1>
       <Tabs defaultValue="geral" className="mt-6">
         <TabsList className="h-auto flex-wrap">
-          {[["geral", "Visão geral"], ["pendentes", "Pendentes"], ["catalogo", "Catálogo"], ["artistas", "Artistas"], ["generos", "Géneros"], ["direitos", "Direitos/licenças"], ["relatorios", "Relatórios"], ["definicoes", "Definições"]].map(([v, l]) => (
+          {ADMIN_TABS.map(([v, l]) => (
             <TabsTrigger key={v} value={v}>{l}</TabsTrigger>
           ))}
         </TabsList>
@@ -82,16 +90,16 @@ function Overview() {
   );
 }
 
-type AdminTrack = { id: string; title: string; artist_name: string; status: string; featured: boolean; download_allowed: boolean; license_id: string | null; is_demo: boolean; audio_path: string | null; rights_holders: string | null; consent_download: boolean; consent_streaming: boolean; artist_id: string | null; admin_notes: string | null };
+type AdminTrack = { id: string; title: string; artist_name: string; status: Database["public"]["Enums"]["track_status"]; featured: boolean; download_allowed: boolean; license_id: string | null; is_demo: boolean; audio_path: string | null; rights_holders: string | null; rights_confirmed: boolean; consent_download: boolean; consent_streaming: boolean; artist_id: string | null; admin_notes: string | null };
 
 function TracksAdmin({ onlyPending }: { onlyPending?: boolean }) {
   const refresh = useRefresh();
   const tracks = useAdmin<AdminTrack[]>(onlyPending ? "pending" : "tracks", () => {
-    let q = supabase.from("tracks").select("id,title,artist_name,status,featured,download_allowed,license_id,is_demo,audio_path,rights_holders,consent_download,consent_streaming,artist_id,admin_notes").order("created_at", { ascending: false });
+    let q = supabase.from("tracks").select("id,title,artist_name,status,featured,download_allowed,license_id,is_demo,audio_path,rights_holders,rights_confirmed,consent_download,consent_streaming,artist_id,admin_notes").order("created_at", { ascending: false });
     if (onlyPending) q = q.eq("status", "pending");
     return q;
   });
-  const licenses = useAdmin<{ id: string; holder: string; verification_status: string }[]>("licenses-min", () => supabase.from("licenses").select("id,holder,verification_status"));
+  const licenses = useAdmin<{ id: string; holder: string; verification_status: string; allows_streaming: boolean; allows_download: boolean; starts_at: string | null; ends_at: string | null }[]>("licenses-min", () => supabase.from("licenses").select("id,holder,verification_status,allows_streaming,allows_download,starts_at,ends_at"));
   const artists = useAdmin<{ id: string; name: string }[]>("artists-min", () => supabase.from("artists").select("id,name").order("name"));
 
   async function update(id: string, patch: Partial<AdminTrack>) {
@@ -107,7 +115,9 @@ function TracksAdmin({ onlyPending }: { onlyPending?: boolean }) {
   if (!tracks.data?.length) return <div className="mt-4"><EmptyState title={onlyPending ? "Sem submissões pendentes." : "Catálogo vazio."} /></div>;
   return (
     <div className="mt-4 space-y-3">
-      {tracks.data.map((t) => (
+      {tracks.data.map((t) => {
+        const license = licenses.data?.find((l) => l.id === t.license_id);
+        return (
         <div key={t.id} className="space-y-3 rounded-xl border border-border bg-card p-4">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div>
@@ -126,17 +136,18 @@ function TracksAdmin({ onlyPending }: { onlyPending?: boolean }) {
               {artists.data?.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
             </select>
             <label className="flex items-center gap-2">Destaque <Switch checked={t.featured} onCheckedChange={(v) => update(t.id, { featured: v })} /></label>
-            <label className="flex items-center gap-2">Download <Switch checked={t.download_allowed} onCheckedChange={(v) => update(t.id, { download_allowed: v })} /></label>
+            <label className="flex items-center gap-2" title="Exige faixa aprovada, consentimento e licença de download válida">Download <Switch checked={t.download_allowed} disabled={!t.download_allowed && !canDownloadTrack(t, license)} onCheckedChange={(v) => update(t.id, { download_allowed: v })} /></label>
             {t.audio_path && <Button size="sm" variant="ghost" onClick={() => listen(t.audio_path!)}>Ouvir</Button>}
           </div>
           <div className="flex flex-wrap gap-2">
-            <Button size="sm" variant="gold" onClick={() => update(t.id, { status: "approved" })}>Aprovar</Button>
+            <Button size="sm" variant="gold" disabled={!canApproveTrack(t, license)} title="Exige direitos, consentimento e licença de streaming válidos" onClick={() => update(t.id, { status: "approved" })}>Aprovar</Button>
             <Button size="sm" variant="silver" onClick={() => update(t.id, { status: "rejected" })}>Rejeitar</Button>
             <Button size="sm" variant="ghost" onClick={() => { const v = prompt("Novo título", t.title); if (v) update(t.id, { title: v }); }}>Editar título</Button>
             <Button size="sm" variant="ghost" onClick={() => update(t.id, { status: "removed", featured: false })}>Remover</Button>
           </div>
         </div>
-      ))}
+        );
+      })}
       <p className="text-xs text-muted-foreground">A aprovação e o download são bloqueados pela base de dados quando a licença não está verificada.</p>
     </div>
   );
@@ -153,7 +164,7 @@ function ArtistsAdmin() {
     const { error } = await supabase.from("artists").insert({ name, province, slug });
     err(error, "Artista criado."); setName(""); refresh();
   }
-  async function patch(id: string, p: Record<string, unknown>) { err((await supabase.from("artists").update(p).eq("id", id)).error); refresh(); }
+  async function patch(id: string, p: Database["public"]["Tables"]["artists"]["Update"]) { err((await supabase.from("artists").update(p).eq("id", id)).error); refresh(); }
   async function promote(userId: string) { err((await supabase.from("user_roles").insert({ user_id: userId, role: "artist" })).error, "Função de artista atribuída."); }
   return (
     <div className="mt-4 space-y-4">
@@ -205,7 +216,8 @@ function LicensesAdmin() {
   const [busy, setBusy] = useState(false);
   async function add(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault(); setBusy(true);
-    const fd = new FormData(e.currentTarget);
+    const form = e.currentTarget;
+    const fd = new FormData(form);
     let evidence_path: string | null = null;
     const file = fd.get("evidence") as File;
     if (file?.size) {
@@ -220,7 +232,7 @@ function LicensesAdmin() {
       starts_at: (fd.get("starts_at") as string) || null, ends_at: (fd.get("ends_at") as string) || null,
       notes: String(fd.get("notes") || ""), evidence_path,
     });
-    setBusy(false); err(error, "Licença registada."); if (!error) e.currentTarget.reset(); refresh();
+    setBusy(false); err(error, "Licença registada."); if (!error) form.reset(); refresh();
   }
   async function setStatus(id: string, verification_status: "pending" | "verified" | "rejected") { err((await supabase.from("licenses").update({ verification_status }).eq("id", id)).error); refresh(); }
   async function openDoc(p: string) { const { data } = await supabase.storage.from("license-docs").createSignedUrl(p, 300); if (data) window.open(data.signedUrl, "_blank"); }
@@ -263,7 +275,7 @@ function ReportsAdmin() {
   const share = Number(settings.data?.platform_share ?? 10);
   async function add(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault(); const fd = new FormData(e.currentTarget);
-    err((await supabase.from("financial_reports").insert({ artist_id: String(fd.get("artist")), period: String(fd.get("period")), gross: Number(fd.get("gross")), distributor_commission_pct: Number(fd.get("pct")), is_demo: fd.get("demo") === "on" })).error, "Relatório criado.");
+    err((await supabase.from("financial_reports").insert({ artist_id: String(fd.get("artist")), period: String(fd.get("period")), gross: Number(fd.get("gross")), distributor_commission_pct: Number(fd.get("pct")), is_demo: true })).error, "Simulação criada.");
     refresh();
   }
   return (
@@ -274,12 +286,12 @@ function ReportsAdmin() {
         <Input name="period" placeholder="Período (2026-10)" required className="w-36" />
         <Input name="gross" type="number" placeholder="Bruto (Kz)" required className="w-36" />
         <Input name="pct" type="number" placeholder="Comissão %" defaultValue={Number(settings.data?.distributor_commission ?? 0)} className="w-28" />
-        <label className="flex items-center gap-2 text-sm"><input type="checkbox" name="demo" defaultChecked /> Demonstração</label>
-        <Button variant="gold">Criar</Button>
+        <span className="text-xs text-muted-foreground">Todos os relatórios são simulações, sem pagamento.</span>
+        <Button variant="gold">Criar simulação</Button>
       </form>
       <div className="overflow-x-auto rounded-xl border border-border">
         <table className="w-full text-sm">
-          <thead className="bg-secondary text-left"><tr>{["Artista", "Período", "Bruto", "Com. distribuidor", "Após comissão", `A.S MUSIC ${share}%`, `Artista ${100 - share}%`, "Estado"].map((h) => <th key={h} className="p-3 font-medium">{h}</th>)}</tr></thead>
+          <thead className="bg-secondary text-left"><tr>{["Artista", "Período", "Bruto", "Com. distribuidor", "Após comissão", `A.S MUSIC ${share}%`, `Artista ${100 - share}%`, "Modalidade"].map((h) => <th key={h} className="p-3 font-medium">{h}</th>)}</tr></thead>
           <tbody>
             {list.data?.map((r) => {
               const x = splitRevenue(Number(r.gross), Number(r.distributor_commission_pct), share);
@@ -289,11 +301,7 @@ function ReportsAdmin() {
                   <td className="p-3">{r.period}</td><td className="p-3">{formatKz(x.gross)}</td>
                   <td className="p-3">{formatKz(x.commission)} ({r.distributor_commission_pct}%)</td>
                   <td className="p-3">{formatKz(x.afterCommission)}</td><td className="p-3">{formatKz(x.platform)}</td><td className="p-3">{formatKz(x.artist)}</td>
-                  <td className="p-3">
-                    <select className={sel} value={r.payment_status} aria-label="Estado de pagamento" onChange={async (e) => { err((await supabase.from("financial_reports").update({ payment_status: e.target.value as "pendente" | "pago" }).eq("id", r.id)).error); refresh(); }}>
-                      <option value="pendente">Pendente</option><option value="pago">Pago</option>
-                    </select>
-                  </td>
+                  <td className="p-3"><Badge variant="outline">Simulação · sem pagamento</Badge></td>
                 </tr>
               );
             })}
