@@ -6,6 +6,16 @@
 - Sem trial e sem activação antes do pagamento.
 - Renovação manual: sem débito automático.
 
+## Situação da conta de recebimento — conta pessoal comum
+
+O administrador principal informou que, neste momento, dispõe apenas de uma conta bancária pessoal comum, sem actividade comercial registada em nome individual nem sociedade constituída. Por isso:
+
+- Os campos permitem guardar o nome do titular pessoal, banco, IBAN e número de conta para preparação.
+- Guardar os dados não significa que o banco autorize recebimentos comerciais nessa conta.
+- Todos os métodos permanecem desactivados e a activação está bloqueada na interface até existir confirmação escrita do banco e, quando aplicável, da AppyPay.
+- Multicaixa Express, referência e UNITEL Money não devem ser activados sem aprovação específica do banco/prestador.
+- Transferências manuais só poderão ser aceites depois de o banco confirmar que a conta pode receber pagamentos de clientes para esta actividade.
+
 ## Preparado nesta migração
 - Fixa o item `premium_monthly` em 5.000 AOA.
 - Cria configuração de instruções de recebimento por método, editável pelo administrador principal. Começa desactivada e vazia para que sejam inseridos os dados reais.
@@ -24,4 +34,4 @@ Um comprovativo (imagem/PDF) não prova automaticamente que o dinheiro entrou. A
 4. Implementar a apresentação do botão “Libertar Premium por 1 mês” apenas no chat/admin quando a ordem estiver `paid`; chamar RPC acima.
 5. Fazer testes de segurança, upload, permissões, repetição de webhook, valor/moeda incorrectos e ciclo completo sandbox.
 
-Nenhum método é activado automaticamente nesta migração. O fornecedor e os dados de recebimento têm de ser confirmados primeiro.
+Nenhum método é activado automaticamente nesta migração. A lista de métodos autorizados no código está vazia até serem recebidas e verificadas as aprovações escritas do banco e do fornecedor.
