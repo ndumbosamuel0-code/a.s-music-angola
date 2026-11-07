@@ -100,7 +100,11 @@ function Profile({ userId }: { userId: string }) {
   async function save(e: React.FormEvent) {
     e.preventDefault();
     const { error } = await supabase.from("profiles").update(form).eq("id", userId);
-    error ? toast.error("Não foi possível guardar.") : toast.success("Perfil guardado.");
+    if (error) {
+      toast.error("Não foi possível guardar.");
+      return;
+    }
+    toast.success("Perfil guardado.");
   }
   const f = (k: keyof typeof form) => ({
     value: form[k],
