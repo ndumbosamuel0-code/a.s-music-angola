@@ -152,6 +152,57 @@ export type Database = {
         }
         Relationships: []
       }
+      distributor_applications: {
+        Row: {
+          catalog_description: string
+          company_name: string
+          contact_email: string
+          contact_name: string
+          created_at: string
+          id: string
+          phone: string
+          province: string | null
+          review_note: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          user_id: string
+          website: string | null
+        }
+        Insert: {
+          catalog_description: string
+          company_name: string
+          contact_email: string
+          contact_name: string
+          created_at?: string
+          id?: string
+          phone: string
+          province?: string | null
+          review_note?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          user_id: string
+          website?: string | null
+        }
+        Update: {
+          catalog_description?: string
+          company_name?: string
+          contact_email?: string
+          contact_name?: string
+          created_at?: string
+          id?: string
+          phone?: string
+          province?: string | null
+          review_note?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          user_id?: string
+          website?: string | null
+        }
+        Relationships: []
+      }
       financial_reports: {
         Row: {
           artist_id: string | null
@@ -479,7 +530,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      claim_principal_admin: { Args: never; Returns: undefined }
+      claim_principal_admin: { Args: never; Returns: undefined }\n      review_distributor_application: { Args: { p_application_id: string; p_decision: string; p_note?: string | null }; Returns: undefined }
       has_role: { Args: { _role: string; _user_id: string }; Returns: boolean }
       mark_artist_payout_paid: {
         Args: { p_reference: string; p_request_id: string }
@@ -501,7 +552,7 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin" | "artist" | "user"
+      app_role: "admin" | "artist" | "user" | "distributor"
       payment_status: "pendente" | "pago"
       track_status: "pending" | "approved" | "rejected" | "removed"
       verification_status: "pending" | "verified" | "rejected"
@@ -632,7 +683,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "artist", "user"],
+      app_role: ["admin", "artist", "user", "distributor"],
       payment_status: ["pendente", "pago"],
       track_status: ["pending", "approved", "rejected", "removed"],
       verification_status: ["pending", "verified", "rejected"],
