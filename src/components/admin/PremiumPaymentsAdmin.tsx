@@ -71,6 +71,10 @@ export function PremiumPaymentsAdmin() {
   }
 
   async function save(method: Method, enabled: boolean) {
+    if (enabled && !APPROVED_PAYMENT_METHODS.includes(method.method_code)) {
+      toast.error("A activação está bloqueada até existir aprovação escrita do banco/prestador para este método.");
+      return;
+    }
     const instructions = valuesFor(method);
     const required = METHOD_FIELDS[method.method_code] ?? [];
     if (enabled && required.some((field) => field.required && !instructions[field.key]?.trim())) {
@@ -150,8 +154,9 @@ function MethodEditor({ method, values, onChange, onSave, canActivate }: {
   values: Record<string, string>;
   onChange: (key: string, value: string) => void;
   onSave: (enabled: boolean) => void;
+  canActivate: boolean;
 }) {
-  const [enabled, setEnabled] = useState(method.is_enabled);
+  const [enabled, setEnabled] = useState(method.is_enabled && APPROVED_PAYMENT_METHODS.includes(method.method_code));
   const fields = METHOD_FIELDS[method.method_code] ?? [];
   return (
     <div className="rounded-lg border p-3">
