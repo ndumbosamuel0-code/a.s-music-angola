@@ -12,7 +12,7 @@
 1. Selo de estado Premium na área pessoal do artista.
 2. Chat individual e privado com a administração para suporte e comprovativos.
 3. Histórico de pedidos e estado dos pagamentos.
-4. Acompanhamento das submissões já existente na conta do artista.
+4. Acompanhamento das submissões já existente na conta do artista.\n5. Prioridade na fila interna de revisão das faixas submetidas enquanto a subscrição estiver activa (não garante aprovação nem publicação).
 
 Não anunciar publicação garantida, distribuição em lojas, royalties, downloads ilimitados, destaque garantido ou aprovação automática como vantagem Premium. Esses itens dependem de contratos, direitos, inventário e funcionalidades adicionais que ainda não estão activos.
 
