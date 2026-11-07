@@ -33,11 +33,13 @@ type License = {
 };
 
 function licenseIsCurrent(license: License | undefined, today: string) {
-  return !!license &&
+  return (
+    !!license &&
     license.verification_status === "verified" &&
     license.allows_streaming &&
     (!license.starts_at || license.starts_at <= today) &&
-    (!license.ends_at || license.ends_at >= today);
+    (!license.ends_at || license.ends_at >= today)
+  );
 }
 
 export function DistributionAdmin() {
@@ -47,7 +49,9 @@ export function DistributionAdmin() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("tracks")
-        .select("id,title,artist_name,genre_id,release_date,credits,rights_holders,rights_confirmed,consent_streaming,audio_path,cover_url,license_id,is_demo,status")
+        .select(
+          "id,title,artist_name,genre_id,release_date,credits,rights_holders,rights_confirmed,consent_streaming,audio_path,cover_url,license_id,is_demo,status",
+        )
         .eq("status", "approved")
         .order("created_at", { ascending: false });
       if (error) throw error;
@@ -75,27 +79,40 @@ export function DistributionAdmin() {
   const settings = useQuery({
     queryKey: ["settings"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("settings").select("distribution_status").eq("id", 1).maybeSingle();
+      const { data, error } = await supabase
+        .from("settings")
+        .select("distribution_status")
+        .eq("id", 1)
+        .maybeSingle();
       if (error) throw error;
       return data;
     },
   });
 
   const today = new Date().toISOString().slice(0, 10);
-  const licenseById = useMemo(() => new Map((licenses.data ?? []).map((l) => [l.id, l])), [licenses.data]);
-  const genreById = useMemo(() => new Map((genres.data ?? []).map((g) => [g.id, g.name])), [genres.data]);
-  const candidates = (tracks.data ?? []).filter((t) =>
-    !t.is_demo &&
-    t.rights_confirmed &&
-    t.consent_streaming &&
-    !!t.audio_path &&
-    licenseIsCurrent(t.license_id ? licenseById.get(t.license_id) : undefined, today)
+  const licenseById = useMemo(
+    () => new Map((licenses.data ?? []).map((l) => [l.id, l])),
+    [licenses.data],
+  );
+  const genreById = useMemo(
+    () => new Map((genres.data ?? []).map((g) => [g.id, g.name])),
+    [genres.data],
+  );
+  const candidates = (tracks.data ?? []).filter(
+    (t) =>
+      !t.is_demo &&
+      t.rights_confirmed &&
+      t.consent_streaming &&
+      !!t.audio_path &&
+      licenseIsCurrent(t.license_id ? licenseById.get(t.license_id) : undefined, today),
   );
   const candidateIds = candidates.map((t) => t.id);
   const selectedTracks = candidates.filter((t) => selected.includes(t.id));
 
   function toggle(id: string, checked: boolean) {
-    setSelected((current) => checked ? [...new Set([...current, id])] : current.filter((x) => x !== id));
+    setSelected((current) =>
+      checked ? [...new Set([...current, id])] : current.filter((x) => x !== id),
+    );
   }
 
   function exportManifest() {
@@ -116,7 +133,7 @@ export function DistributionAdmin() {
           internal_track_id: t.id,
           title: t.title,
           primary_artist: t.artist_name,
-          genre: t.genre_id ? genreById.get(t.genre_id) ?? null : null,
+          genre: t.genre_id ? (genreById.get(t.genre_id) ?? null) : null,
           intended_release_date: t.release_date,
           credits: t.credits,
           rights_holders: t.rights_holders,
@@ -149,7 +166,24 @@ export function DistributionAdmin() {
     return <div className="mt-4 h-32 animate-pulse rounded-xl bg-secondary" />;
   }
   if (tracks.error || licenses.error || genres.error) {
-    return <div className="mt-4 space-y-3"><EmptyState title="Não foi possível carregar os lançamentos." text="Verifica as permissões da conta e tenta novamente." /><Button variant="silver" onClick={() => { tracks.refetch(); licenses.refetch(); genres.refetch(); }}>Tentar novamente</Button></div>;
+    return (
+      <div className="mt-4 space-y-3">
+        <EmptyState
+          title="Não foi possível carregar os lançamentos."
+          text="Verifica as permissões da conta e tenta novamente."
+        />
+        <Button
+          variant="silver"
+          onClick={() => {
+            tracks.refetch();
+            licenses.refetch();
+            genres.refetch();
+          }}
+        >
+          Tentar novamente
+        </Button>
+      </div>
+    );
   }
 
   return (
@@ -160,42 +194,105 @@ export function DistributionAdmin() {
           <Badge variant="outline">Não ligada</Badge>
         </div>
         <p className="mt-2 text-sm text-muted-foreground">
-          {settings.data?.distribution_status || "Acordos e integrações por confirmar"}. O envio automático para todas as lojas incluídas no contrato só será activado depois do onboarding, documentação técnica e credenciais oficiais da Revelator.
+          {settings.data?.distribution_status || "Acordos e integrações por confirmar"}. O envio
+          automático para todas as lojas incluídas no contrato só será activado depois do
+          onboarding, documentação técnica e credenciais oficiais da Revelator.
         </p>
-        <p className="mt-2 text-xs text-muted-foreground">As credenciais serão configuradas apenas no servidor. Nunca as coloques nesta página nem no código do navegador.</p>
+        <p className="mt-2 text-xs text-muted-foreground">
+          As credenciais serão configuradas apenas no servidor. Nunca as coloques nesta página nem
+          no código do navegador.
+        </p>
       </div>
 
       <div className="grid gap-3 sm:grid-cols-3">
-        <div className="rounded-xl border border-border bg-card p-4"><p className="text-xs text-muted-foreground">Faixas aprovadas</p><p className="mt-1 text-2xl font-semibold">{tracks.data?.length ?? 0}</p></div>
-        <div className="rounded-xl border border-border bg-card p-4"><p className="text-xs text-muted-foreground">Elegíveis para preparar</p><p className="mt-1 text-2xl font-semibold text-gold">{candidates.length}</p></div>
-        <div className="rounded-xl border border-border bg-card p-4"><p className="text-xs text-muted-foreground">Seleccionadas neste lote</p><p className="mt-1 text-2xl font-semibold">{selectedTracks.length}</p></div>
-      </div>
-
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div><h2 className="font-semibold">Preparar lançamentos em lote</h2><p className="text-sm text-muted-foreground">Selecciona várias faixas e exporta um manifesto único.</p></div>
-        <div className="flex flex-wrap gap-2">
-          <Button size="sm" variant="silver" onClick={() => setSelected(candidateIds)}>Seleccionar elegíveis</Button>
-          <Button size="sm" variant="ghost" onClick={() => setSelected([])}>Limpar selecção</Button>
-          <Button size="sm" variant="gold" disabled={!selectedTracks.length} onClick={exportManifest}>Exportar manifesto ({selectedTracks.length})</Button>
+        <div className="rounded-xl border border-border bg-card p-4">
+          <p className="text-xs text-muted-foreground">Faixas aprovadas</p>
+          <p className="mt-1 text-2xl font-semibold">{tracks.data?.length ?? 0}</p>
+        </div>
+        <div className="rounded-xl border border-border bg-card p-4">
+          <p className="text-xs text-muted-foreground">Elegíveis para preparar</p>
+          <p className="mt-1 text-2xl font-semibold text-gold">{candidates.length}</p>
+        </div>
+        <div className="rounded-xl border border-border bg-card p-4">
+          <p className="text-xs text-muted-foreground">Seleccionadas neste lote</p>
+          <p className="mt-1 text-2xl font-semibold">{selectedTracks.length}</p>
         </div>
       </div>
 
-      {!tracks.data?.length ? <EmptyState title="Ainda não existem faixas aprovadas." text="As faixas aparecem aqui depois de serem aprovadas pela administração." /> :
-        !candidates.length ? <EmptyState title="Nenhuma faixa pronta para distribuição." text="É necessário ter áudio carregado, direitos confirmados, consentimento de streaming e licença verificada, válida e autorizada para streaming." /> :
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div>
+          <h2 className="font-semibold">Preparar lançamentos em lote</h2>
+          <p className="text-sm text-muted-foreground">
+            Selecciona várias faixas e exporta um manifesto único.
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Button size="sm" variant="silver" onClick={() => setSelected(candidateIds)}>
+            Seleccionar elegíveis
+          </Button>
+          <Button size="sm" variant="ghost" onClick={() => setSelected([])}>
+            Limpar selecção
+          </Button>
+          <Button
+            size="sm"
+            variant="gold"
+            disabled={!selectedTracks.length}
+            onClick={exportManifest}
+          >
+            Exportar manifesto ({selectedTracks.length})
+          </Button>
+        </div>
+      </div>
+
+      {!tracks.data?.length ? (
+        <EmptyState
+          title="Ainda não existem faixas aprovadas."
+          text="As faixas aparecem aqui depois de serem aprovadas pela administração."
+        />
+      ) : !candidates.length ? (
+        <EmptyState
+          title="Nenhuma faixa pronta para distribuição."
+          text="É necessário ter áudio carregado, direitos confirmados, consentimento de streaming e licença verificada, válida e autorizada para streaming."
+        />
+      ) : (
         <div className="space-y-2">
           {candidates.map((t) => (
-            <label key={t.id} className="flex cursor-pointer items-start gap-3 rounded-xl border border-border bg-card p-4">
-              <input type="checkbox" className="mt-1 h-4 w-4 accent-yellow-500" checked={selected.includes(t.id)} onChange={(e) => toggle(t.id, e.target.checked)} />
+            <label
+              key={t.id}
+              className="flex cursor-pointer items-start gap-3 rounded-xl border border-border bg-card p-4"
+            >
+              <input
+                type="checkbox"
+                className="mt-1 h-4 w-4 accent-yellow-500"
+                checked={selected.includes(t.id)}
+                onChange={(e) => toggle(t.id, e.target.checked)}
+              />
               <span className="min-w-0 flex-1">
-                <span className="flex flex-wrap items-center gap-2 font-medium">{t.title}<Badge>Elegível</Badge></span>
-                <span className="mt-1 block text-sm text-muted-foreground">{t.artist_name} · {t.genre_id ? genreById.get(t.genre_id) ?? "Género não indicado" : "Género não indicado"}</span>
-                <span className="mt-1 block text-xs text-muted-foreground">Licença: {t.license_id ? licenseById.get(t.license_id)?.holder ?? "—" : "—"} · Território: {t.license_id ? licenseById.get(t.license_id)?.territory ?? "—" : "—"}</span>
+                <span className="flex flex-wrap items-center gap-2 font-medium">
+                  {t.title}
+                  <Badge>Elegível</Badge>
+                </span>
+                <span className="mt-1 block text-sm text-muted-foreground">
+                  {t.artist_name} ·{" "}
+                  {t.genre_id
+                    ? (genreById.get(t.genre_id) ?? "Género não indicado")
+                    : "Género não indicado"}
+                </span>
+                <span className="mt-1 block text-xs text-muted-foreground">
+                  Licença: {t.license_id ? (licenseById.get(t.license_id)?.holder ?? "—") : "—"} ·
+                  Território:{" "}
+                  {t.license_id ? (licenseById.get(t.license_id)?.territory ?? "—") : "—"}
+                </span>
               </span>
             </label>
           ))}
         </div>
-      }
-      <p className="text-xs text-muted-foreground">O manifesto contém metadados e caminhos internos dos ficheiros. Não contém os áudios nem os envia para lojas. A entrega real será feita pelo conector oficial, depois de configurado e testado.</p>
+      )}
+      <p className="text-xs text-muted-foreground">
+        O manifesto contém metadados e caminhos internos dos ficheiros. Não contém os áudios nem os
+        envia para lojas. A entrega real será feita pelo conector oficial, depois de configurado e
+        testado.
+      </p>
     </div>
   );
 }
