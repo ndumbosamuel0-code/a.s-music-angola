@@ -140,10 +140,42 @@ export function PlatformRevenueAdmin() {
         </div>
       </section>
 
+      <section className="rounded-xl border border-border bg-card p-4">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div><h3 className="font-semibold">Catálogo de fornecedores de publicidade</h3><p className="text-sm text-muted-foreground">Várias opções para comparar e negociar, sem depender de uma única rede.</p></div>
+          <Badge variant="outline">Todos por avaliar</Badge>
+        </div>
+        <div className="mt-3 grid gap-3 md:grid-cols-2">
+          {[
+            { name: "Google AdSense", type: "Anúncios display e conteúdo", note: "Angola consta na tabela oficial de pagamentos por transferência bancária internacional. Aprovação do site, conta e tráfego continua sujeita às regras Google.", url: "https://www.google.com/adsense/start/" },
+            { name: "Monetag", type: "Display, formatos nativos e outros formatos", note: "Candidato a contactar. Confirmar por escrito aceitação da plataforma musical, Angola e levantamento para a conta bancária.", url: "https://monetag.com/" },
+            { name: "Adsterra", type: "Display, social bar e formatos de vídeo", note: "Candidato a contactar. Os métodos de pagamento dependem do país e das opções disponibilizadas na conta.", url: "https://adsterra.com/publishers/" },
+            { name: "PropellerAds", type: "Publicidade digital para publishers", note: "Candidato a avaliar; confirmar elegibilidade de Angola, formatos permitidos e pagamentos para publishers.", url: "https://propellerads.com/publishers/" },
+            { name: "Ezoic", type: "Optimização e gestão de anúncios", note: "Opção para uma fase de maior tráfego: os requisitos publicados indicam normalmente 250.000 utilizadores activos mensais; existe programa Incubator.", url: "https://www.ezoic.com/get-started/" },
+            { name: "Adcash", type: "Display, nativo e vídeo", note: "Candidato a contactar; pagamentos e aprovação dependem da conta, país e tráfego.", url: "https://adcash.com/publishers/" },
+            { name: "HilltopAds", type: "Display, pop e vídeo", note: "Candidato a contactar; verificar se os formatos são adequados à experiência musical e confirmar pagamento em Angola.", url: "https://hilltopads.com/" },
+            { name: "Clickadu", type: "Display e vídeo", note: "Candidato a contactar; confirmar termos para plataformas de música e recebimento bancário.", url: "https://www.clickadu.com/" },
+            { name: "RichAds", type: "Native, display e notificações", note: "Candidato a contactar; validar formatos, consentimento e métodos de levantamento disponíveis em Angola.", url: "https://richads.com/" },
+            { name: "EvaDav", type: "Native, push e display", note: "Candidato a contactar; verificar adequação dos formatos, aceitação e pagamentos.", url: "https://evadav.com/" },
+            { name: "Setupad", type: "Header bidding e optimização de rendimento", note: "Opção para fase de escala; confirmar requisitos mínimos de tráfego, aprovação e liquidação.", url: "https://setupad.com/" },
+          ].map((provider) => (
+            <div key={provider.name} className="rounded-lg border border-border p-3">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <p className="font-medium">{provider.name}</p>
+                <Badge variant="secondary">Por avaliar</Badge>
+              </div>
+              <p className="mt-1 text-xs font-medium text-muted-foreground">{provider.type}</p>
+              <p className="mt-2 text-sm text-muted-foreground">{provider.note}</p>
+              <a className="mt-2 inline-block text-sm text-primary underline underline-offset-4" href={provider.url} target="_blank" rel="noreferrer">Site oficial</a>
+            </div>
+          ))}
+        </div>
+        <p className="mt-3 text-xs text-muted-foreground">Estas são opções para candidatura e negociação, não integrações activas nem garantias de aceitação ou rendimento. Não vamos carregar vários scripts publicitários ao mesmo tempo: primeiro aprovamos fornecedores, comparamos receita líquida e qualidade, e depois activamos uma combinação controlada para evitar anúncios excessivos, fraude e conflitos de políticas.</p>
+      </section>
       <div className="rounded-xl border border-border bg-card p-4">
-        <h3 className="font-semibold">Fontes previstas</h3>
+        <h3 className="font-semibold">Outras fontes de receita previstas</h3>
         <div className="mt-2 flex flex-wrap gap-2">{Object.values(SOURCE_LABEL).map((label) => <Badge key={label} variant="secondary">{label}</Badge>)}</div>
-        <p className="mt-2 text-xs text-muted-foreground">Publicidade discreta, planos premium e serviços pagos só serão activados depois de aprovados os fornecedores, preços, termos e meios de recebimento compatíveis com Angola. Streaming e distribuição dependem também dos contratos e direitos aplicáveis.</p>
+        <p className="mt-2 text-xs text-muted-foreground">Planos premium, serviços pagos, streaming e distribuição dependem de contratos, direitos, preços e meios de recebimento próprios. Só serão reconhecidos valores reais e verificáveis.</p>
       </div>
     </div>
   );
