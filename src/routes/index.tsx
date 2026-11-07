@@ -34,12 +34,12 @@ function useTracks(key: string, build: (q: any) => any) {
   });
 }
 
-function Section({ title, to, children }: { title: string; to?: string; children: React.ReactNode }) {
+function Section({ title, to, children }: { title: string; to?: "/explorar" | "/artistas"; children: React.ReactNode }) {
   return (
     <section className="mx-auto max-w-6xl px-4 pt-14">
       <div className="mb-5 flex items-end justify-between">
         <h2 className="text-xl font-bold md:text-2xl">{title}</h2>
-        {to && <Link to="/explorar" className="text-sm text-gold hover:underline">Ver tudo</Link>}
+        {to && <Link to={to} className="text-sm text-gold hover:underline">Ver tudo</Link>}
       </div>
       {children}
     </section>
@@ -109,7 +109,7 @@ function Index() {
       <Section title="Destaques" to="/explorar"><TrackGrid q={featured} /></Section>
       <Section title="Lançamentos recentes" to="/explorar"><TrackGrid q={recent} /></Section>
 
-      <Section title="Artistas em destaque">
+      <Section title="Artistas em destaque" to="/artistas">
         {artists.isLoading ? <TrackGridSkeleton n={3} /> : !artists.data?.length ? <EmptyState title="Sem artistas em destaque." /> : (
           <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-5">
             {artists.data.map((a) => (

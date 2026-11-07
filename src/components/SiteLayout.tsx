@@ -10,6 +10,7 @@ import { SLOGAN, WHATSAPP_URL } from "@/lib/brand";
 
 const NAV = [
   { to: "/explorar", label: "Explorar" },
+  { to: "/artistas", label: "Artistas" },
   { to: "/para-artistas", label: "Para artistas" },
   { to: "/distribuicao", label: "Distribuição" },
   { to: "/contacto", label: "Contacto" },
@@ -89,6 +90,7 @@ export function SiteFooter() {
         </div>
         <div className="flex flex-col gap-2 text-sm">
           <Link to="/explorar" className="text-muted-foreground hover:text-foreground">Explorar música</Link>
+          <Link to="/artistas" className="text-muted-foreground hover:text-foreground">Artistas</Link>
           <Link to="/para-artistas" className="text-muted-foreground hover:text-foreground">Para artistas</Link>
           <Link to="/distribuicao" className="text-muted-foreground hover:text-foreground">Distribuição e direitos</Link>
           <Link to="/contacto" className="text-muted-foreground hover:text-foreground">Contacto</Link>
