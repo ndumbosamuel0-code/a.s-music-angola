@@ -121,7 +121,11 @@ function Player({ track }: { track: TrackRow }) {
           onClick={() => {
             const a = ref.current;
             if (!a) return;
-            playing ? a.pause() : a.play();
+            if (playing) {
+              a.pause();
+            } else {
+              void a.play();
+            }
           }}
         >
           {available ? playing ? <Pause /> : <Play /> : <Lock />}
