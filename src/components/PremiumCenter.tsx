@@ -1,6 +1,6 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { BadgeCheck, Clock3, Crown, MessageCircle, Paperclip, RefreshCw, ShieldCheck, Sparkles } from "lucide-react";
+import { BadgeCheck, Crown, MessageCircle, Paperclip, RefreshCw, ShieldCheck, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -13,7 +13,7 @@ type Order = { id: string; amount: number; currency: string; status: string; pay
 type Thread = { id: string; payment_order_id: string | null; payment_status: string; created_at: string };
 type Message = { id: string; sender_id: string; body: string | null; attachment_path: string | null; message_type: string; created_at: string };
 
-const methodLabels: Record<string,string> = { multicaixa_express: "Multicaixa Express", bank_transfer: "Transferência bancária", payment_reference: "Pagamento por referência", unitel_money: "UNITEL Money" };
+const methodLabels: Record<string,string> = { multicaixa_express: "Multicaixa Express", bank_transfer: "Transferência bancária", reference: "Pagamento por referência", unitel_money: "UNITEL Money" };
 const statusLabels: Record<string,string> = { pending: "Pendente", verifying: "Em verificação", paid: "Pago", failed: "Falhou", expired: "Expirado", needs_review: "A aguardar revisão" };
 const money = (n:number) => new Intl.NumberFormat("pt-AO").format(n) + " Kz";
 
