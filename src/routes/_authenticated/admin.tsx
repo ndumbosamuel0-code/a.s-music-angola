@@ -782,15 +782,13 @@ function ReportsAdmin() {
     const fd = new FormData(e.currentTarget);
     err(
       (
-        await supabase
-          .from("financial_reports")
-          .insert({
-            artist_id: String(fd.get("artist")),
-            period: String(fd.get("period")),
-            gross: Number(fd.get("gross")),
-            distributor_commission_pct: Number(fd.get("pct")),
-            is_demo: true,
-          })
+        await supabase.from("financial_reports").insert({
+          artist_id: String(fd.get("artist")),
+          period: String(fd.get("period")),
+          gross: Number(fd.get("gross")),
+          distributor_commission_pct: Number(fd.get("pct")),
+          is_demo: true,
+        })
       ).error,
       "Simulação criada.",
     );
