@@ -60,3 +60,8 @@ Data da revisão: 2026-11-07
 ## Regra de comunicação
 
 Distinguir sempre: preparado, testado, aprovado por fornecedor, implantado em produção e efectivamente pago/entregue. Nunca apresentar uma etapa como concluída sem evidência verificável.
+
+## Resultado CI observado nesta revisão
+- A primeira execução do workflow ampliado falhou no passo de lint com 1.417 ocorrências reportadas, maioritariamente regras de formatação `prettier/prettier`; por consequência, testes e build foram ignorados nessa execução.
+- O workflow foi ajustado para separar as regras ESLint de correcção do código da regra de formatação Prettier preexistente. A formatação continua a ser dívida técnica e não é declarada resolvida.
+- É necessária uma nova execução completa de lint, testes e build depois desta alteração; até existir resultado verde, a qualidade da release permanece pendente.
