@@ -5,9 +5,7 @@ import type { Database } from './types';
 import { brokeredPreviewStorage } from './previewAuthStorage';
 
 const SUPABASE_URL = 'https://hvwubckihjuljlhgaial.supabase.co';
-const SUPABASE_PUBLISHABLE_KEY =
-  import.meta.env['VITE_SUPABASE_PUBLISHABLE_KEY'] ||
-  (typeof process !== 'undefined' ? process.env['SUPABASE_PUBLISHABLE_KEY'] : undefined);
+const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_VkmE4w0_-La9UtBpgfMI0w_3NLEwM_H';
 
 function createSupabaseFetch(supabaseKey: string): typeof fetch {
   return (input, init) => {
