@@ -14,6 +14,105 @@ export type Database = {
   }
   public: {
     Tables: {
+      artist_earnings_ledger: {
+        Row: {
+          amount_kz: number
+          artist_user_id: string
+          created_at: string
+          created_by: string | null
+          id: string
+          reference: string | null
+          source: string
+        }
+        Insert: {
+          amount_kz: number
+          artist_user_id: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          reference?: string | null
+          source: string
+        }
+        Update: {
+          amount_kz?: number
+          artist_user_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          reference?: string | null
+          source?: string
+        }
+        Relationships: []
+      }
+      artist_payment_accounts: {
+        Row: {
+          account_holder: string
+          account_number: string | null
+          bank_name: string
+          iban: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          account_holder: string
+          account_number?: string | null
+          bank_name: string
+          iban?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          account_holder?: string
+          account_number?: string | null
+          bank_name?: string
+          iban?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      artist_payout_requests: {
+        Row: {
+          account_snapshot: Json
+          amount_kz: number
+          artist_user_id: string
+          id: string
+          paid_at: string | null
+          payment_reference: string | null
+          requested_at: string
+          review_note: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+        }
+        Insert: {
+          account_snapshot: Json
+          amount_kz: number
+          artist_user_id: string
+          id?: string
+          paid_at?: string | null
+          payment_reference?: string | null
+          requested_at?: string
+          review_note?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+        }
+        Update: {
+          account_snapshot?: Json
+          amount_kz?: number
+          artist_user_id?: string
+          id?: string
+          paid_at?: string | null
+          payment_reference?: string | null
+          requested_at?: string
+          review_note?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+        }
+        Relationships: []
+      }
       artists: {
         Row: {
           bio: string | null
@@ -167,33 +266,66 @@ export type Database = {
         }
         Relationships: []
       }
+      platform_control: {
+        Row: {
+          id: boolean
+          principal_admin_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          id?: boolean
+          principal_admin_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          id?: boolean
+          principal_admin_id?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           artist_name: string | null
+          avatar_url: string | null
           bio: string | null
           created_at: string
           display_name: string | null
+          email: string | null
+          full_name: string | null
           id: string
           phone: string | null
           province: string | null
+          role: string
+          updated_at: string
         }
         Insert: {
           artist_name?: string | null
+          avatar_url?: string | null
           bio?: string | null
           created_at?: string
           display_name?: string | null
+          email?: string | null
+          full_name?: string | null
           id: string
           phone?: string | null
           province?: string | null
+          role?: string
+          updated_at?: string
         }
         Update: {
           artist_name?: string | null
+          avatar_url?: string | null
           bio?: string | null
           created_at?: string
           display_name?: string | null
+          email?: string | null
+          full_name?: string | null
           id?: string
           phone?: string | null
           province?: string | null
+          role?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -209,7 +341,7 @@ export type Database = {
         Insert: {
           distribution_status?: string
           distributor_commission?: number
-          id?: number
+          id: number
           logo_url?: string | null
           platform_share?: number
           updated_at?: string
@@ -347,14 +479,25 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      can_read_cover: { Args: { _path: string }; Returns: boolean }
-      can_stream: { Args: { _path: string }; Returns: boolean }
-      has_role: {
+      claim_principal_admin: { Args: never; Returns: undefined }
+      has_role: { Args: { _role: string; _user_id: string }; Returns: boolean }
+      mark_artist_payout_paid: {
+        Args: { p_reference: string; p_request_id: string }
+        Returns: undefined
+      }
+      request_artist_payout: { Args: never; Returns: string }
+      review_artist_payout: {
+        Args: { p_decision: string; p_note?: string; p_request_id: string }
+        Returns: undefined
+      }
+      save_artist_payment_account: {
         Args: {
-          _role: Database["public"]["Enums"]["app_role"]
-          _user_id: string
+          p_account_holder: string
+          p_account_number?: string
+          p_bank_name: string
+          p_iban?: string
         }
-        Returns: boolean
+        Returns: undefined
       }
     }
     Enums: {
