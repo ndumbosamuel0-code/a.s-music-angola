@@ -13,7 +13,17 @@ type Order = { id: string; amount: number; currency: string; status: string; pay
 type Thread = { id: string; payment_order_id: string | null; payment_status: string; created_at: string };
 type Message = { id: string; sender_id: string; body: string | null; attachment_path: string | null; message_type: string; created_at: string };
 
-const methodLabels: Record<string,string> = { multicaixa_express: "Multicaixa Express", bank_transfer: "Transferência bancária", reference: "Pagamento por referência", unitel_money: "UNITEL Money" };
+const methodLabels: Record<string,string> = { multicaixa_express: "Multicaixa Express", bank_transfer: "Transferência bancária", payment_reference: "Pagamento por referência", unitel_money: "UNITEL Money" };
+const instructionLabels: Record<string,string> = {
+  phone: "Número de pagamento",
+  account_holder: "Titular",
+  bank_name: "Banco",
+  iban: "IBAN",
+  account_number: "Número da conta",
+  entity: "Entidade",
+  beneficiary: "Beneficiário",
+  instructions: "Instruções",
+};
 const statusLabels: Record<string,string> = { pending: "Pendente", verifying: "Em verificação", paid: "Pago", failed: "Falhou", expired: "Expirado", needs_review: "A aguardar revisão" };
 const money = (n:number) => new Intl.NumberFormat("pt-AO").format(n) + " Kz";
 
@@ -176,7 +186,7 @@ export function PremiumCenter({ userId }: { userId: string }) {
       <p className="text-sm text-muted-foreground">Escolhe um método que esteja activo. Os métodos só aparecem depois de a administração configurar os dados de recebimento.</p>
       {methods.isLoading ? <div className="h-10 animate-pulse rounded bg-secondary"/> : !methods.data?.length ? <p className="rounded-lg bg-muted p-3 text-sm">Ainda não há métodos de pagamento activos. Contacta a administração pelo chat ou volta mais tarde.</p> :
         <><div className="grid gap-2 sm:grid-cols-2">{methods.data.map(m=><button type="button" key={m.id} onClick={()=>setMethod(m.method_code)} className={"rounded-lg border p-3 text-left text-sm "+(method===m.method_code?"border-gold bg-gold/5":"border-border")}>{m.display_name}</button>)}</div>
-          {selectedMethod && <div className="rounded-lg bg-muted/60 p-3 text-sm"><p className="font-medium">Instruções de pagamento</p>{Object.entries(selectedMethod.instructions||{}).map(([k,v])=><p key={k} className="mt-1"><span className="text-muted-foreground">{k}: </span>{v}</p>)}</div>}
+          {selectedMethod && <div className="rounded-lg bg-muted/60 p-3 text-sm"><p className="font-medium">Instruções de pagamento</p>{Object.entries(selectedMethod.instructions||{}).filter(([,v])=>String(v||"").trim()).map(([k,v])=><p key={k} className="mt-1"><span className="text-muted-foreground">{instructionLabels[k]||k}: </span>{v}</p>)}</div>}
           <Button variant="gold" disabled={!method||busy} onClick={createOrder}>{busy?"A criar pedido…":"Criar pedido de 5.000 Kz"}</Button></>}
     </section>}
 
