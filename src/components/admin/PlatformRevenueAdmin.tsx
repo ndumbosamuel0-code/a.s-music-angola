@@ -51,7 +51,7 @@ export function PlatformRevenueAdmin() {
       const { data: auth } = await supabase.auth.getUser();
       if (!auth.user) return { principal: false, summary: [], events: [], schemaMissing: false };
 
-      const db = supabase as any;
+      const db = supabase;
       const { data: control, error: controlError } = await db
         .from("platform_control")
         .select("principal_admin_id")

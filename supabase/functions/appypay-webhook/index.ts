@@ -14,14 +14,19 @@ Deno.serve(async (req) => {
   if (!url || !serviceKey || !token)
     return json({ error: "Payment provider is not configured." }, 503);
 
-  let event: any;
+  let payload: unknown;
   try {
-    event = await req.json();
+    payload = await req.json();
   } catch {
     return json({ error: "Invalid payload." }, 400);
   }
-  const chargeId = String(event?.id || "");
-  const merchantTransactionId = String(event?.merchantTransactionId || "");
+  if (!payload || typeof payload !== "object") {
+    return json({ error: "Invalid payload." }, 400);
+  }
+  const event = payload as Record<string, unknown>;
+  const chargeId = typeof event.id === "string" ? event.id : "";
+  const merchantTransactionId =
+    typeof event.merchantTransactionId === "string" ? event.merchantTransactionId : "";
   if (!chargeId || !merchantTransactionId)
     return json({ error: "Missing charge identifiers." }, 400);
 
@@ -30,11 +35,19 @@ Deno.serve(async (req) => {
     headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
   });
   if (!verified.ok) return json({ error: "Could not verify charge with AppyPay." }, 502);
-  const charge: any = await verified.json();
-  const status = String(charge?.responseStatus?.status || "").toLowerCase();
-  const amount = Number(charge?.amount);
-  const currency = String(charge?.currency || "");
-  const tx = String(charge?.merchantTransactionId || "");
+  const chargePayload: unknown = await verified.json();
+  if (!chargePayload || typeof chargePayload !== "object") {
+    return json({ error: "Invalid charge response from AppyPay." }, 502);
+  }
+  const charge = chargePayload as Record<string, unknown>;
+  const responseStatus = charge.responseStatus;
+  const status =
+    responseStatus && typeof responseStatus === "object"
+      ? String((responseStatus as Record<string, unknown>).status || "").toLowerCase()
+      : "";
+  const amount = Number(charge.amount);
+  const currency = String(charge.currency || "");
+  const tx = String(charge.merchantTransactionId || "");
   if (
     status !== "success" ||
     amount !== 5000 ||

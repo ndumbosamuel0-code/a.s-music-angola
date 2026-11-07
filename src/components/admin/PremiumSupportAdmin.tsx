@@ -28,7 +28,7 @@ export function PremiumSupportAdmin() {
   const threads = useQuery({
     queryKey: ["admin", "premium-support-threads"],
     queryFn: async () => {
-      const db = supabase as any;
+      const db = supabase;
       const { data, error } = await db
         .from("billing_support_threads")
         .select("id,user_id,payment_order_id,payment_status,created_at")
@@ -42,7 +42,7 @@ export function PremiumSupportAdmin() {
     queryKey: ["admin", "premium-support-messages", threadId],
     enabled: !!threadId,
     queryFn: async () => {
-      const db = supabase as any;
+      const db = supabase;
       const { data, error } = await db
         .from("billing_support_messages")
         .select("id,sender_id,body,attachment_path,created_at")
@@ -57,7 +57,7 @@ export function PremiumSupportAdmin() {
     if (!threadId || !body.trim()) return;
     const { data } = await supabase.auth.getUser();
     if (!data.user) return;
-    const { error } = await (supabase as any).from("billing_support_messages").insert({
+    const { error } = await supabase.from("billing_support_messages").insert({
       thread_id: threadId,
       sender_id: data.user.id,
       body: body.trim(),

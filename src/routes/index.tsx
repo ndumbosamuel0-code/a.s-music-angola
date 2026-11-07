@@ -30,13 +30,16 @@ export const Route = createFileRoute("/")({
   component: Index,
 });
 
-function useTracks(key: string, build: (q: any) => any) {
+function useTracks(key: "featured" | "recent") {
   return useQuery({
     queryKey: ["tracks", key],
     queryFn: async () => {
-      const { data, error } = await build(supabase.from("tracks").select(TRACK_SELECT));
-      if (error) throw error;
-      return data as TrackRow[];
+      const result =
+        key === "featured"
+          ? await supabase.from("tracks").select(TRACK_SELECT).eq("featured", true).limit(4)
+          : await supabase.from("tracks").select(TRACK_SELECT).order("release_date", { ascending: false }).limit(8);
+      if (result.error) throw result.error;
+      return result.data as TrackRow[];
     },
   });
 }
@@ -87,8 +90,8 @@ function TrackGrid({ q }: { q: ReturnType<typeof useTracks> }) {
 function Index() {
   const [term, setTerm] = useState("");
   const navigate = useNavigate();
-  const featured = useTracks("featured", (q) => q.eq("featured", true).limit(4));
-  const recent = useTracks("recent", (q) => q.order("release_date", { ascending: false }).limit(8));
+  const featured = useTracks("featured");
+  const recent = useTracks("recent");
   const genres = useGenres();
   const artists = useQuery({
     queryKey: ["artists", "featured"],

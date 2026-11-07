@@ -10,7 +10,7 @@ import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { EmptyState } from "@/components/TrackCard";
 import { supabase } from "@/integrations/supabase/client";
-import type { Database } from "@/integrations/supabase/types";
+import type { Database, Tables } from "@/integrations/supabase/types";
 import { useGenres } from "@/lib/data";
 import { formatKz, splitRevenue } from "@/lib/finance";
 import { canApproveTrack, canDownloadTrack } from "@/lib/rights";
@@ -155,16 +155,19 @@ function Overview() {
   const q = useQuery({
     queryKey: ["admin", "overview"],
     queryFn: async () => {
-      const c = async (t: "tracks" | "artists" | "licenses", f?: (q: any) => any) => {
-        let q: any = supabase.from(t).select("id", { count: "exact", head: true });
-        if (f) q = f(q);
-        return (await q).count ?? 0;
-      };
+      const [pending, approved, artists, unverified] = await Promise.all([
+        supabase.from("tracks").select("id", { count: "exact", head: true }).eq("status", "pending"),
+        supabase.from("tracks").select("id", { count: "exact", head: true }).eq("status", "approved"),
+        supabase.from("artists").select("id", { count: "exact", head: true }),
+        supabase.from("licenses").select("id", { count: "exact", head: true }).neq("verification_status", "verified"),
+      ]);
+      const queryError = pending.error || approved.error || artists.error || unverified.error;
+      if (queryError) throw queryError;
       return {
-        pending: await c("tracks", (q) => q.eq("status", "pending")),
-        approved: await c("tracks", (q) => q.eq("status", "approved")),
-        artists: await c("artists"),
-        unverified: await c("licenses", (q) => q.neq("verification_status", "verified")),
+        pending: pending.count ?? 0,
+        approved: approved.count ?? 0,
+        artists: artists.count ?? 0,
+        unverified: unverified.count ?? 0,
       };
     },
   });
@@ -315,7 +318,7 @@ function TracksAdmin({ onlyPending }: { onlyPending?: boolean }) {
     if (onlyPending) q = q.eq("status", "pending");
     const { data, error } = await q;
     if (error) return { data: null, error };
-    const { data: activeSubs, error: subsError } = await (supabase as any)
+    const { data: activeSubs, error: subsError } = await (supabase)
       .from("artist_premium_subscriptions")
       .select("user_id")
       .eq("status", "active")
@@ -503,7 +506,7 @@ function TracksAdmin({ onlyPending }: { onlyPending?: boolean }) {
 
 function ArtistsAdmin() {
   const refresh = useRefresh();
-  const artists = useAdmin<any[]>("artists", () =>
+  const artists = useAdmin<Tables<"artists">[]>("artists", () =>
     supabase.from("artists").select("*").order("created_at", { ascending: false }),
   );
   const profiles = useAdmin<
@@ -663,7 +666,7 @@ function GenresAdmin() {
 
 function LicensesAdmin() {
   const refresh = useRefresh();
-  const list = useAdmin<any[]>("licenses", () =>
+  const list = useAdmin<Tables<"licenses">[]>("licenses", () =>
     supabase.from("licenses").select("*").order("created_at", { ascending: false }),
   );
   const [busy, setBusy] = useState(false);
@@ -777,7 +780,7 @@ function LicensesAdmin() {
               <select
                 className={sel}
                 value={l.verification_status}
-                onChange={(e) => setStatus(l.id, e.target.value as any)}
+                onChange={(e) => setStatus(l.id, e.target.value as "pending" | "verified" | "rejected")}
                 aria-label="Estado de verificação"
               >
                 <option value="pending">Por verificar</option>
@@ -794,7 +797,7 @@ function LicensesAdmin() {
 
 function ReportsAdmin() {
   const refresh = useRefresh();
-  const list = useAdmin<any[]>("reports", () =>
+  const list = useAdmin<Tables<"financial_reports">[]>("reports", () =>
     supabase
       .from("financial_reports")
       .select("*, artists(name)")
@@ -914,19 +917,19 @@ function PayoutsAdmin() {
   const control = useQuery({
     queryKey: ["principal-admin"],
     queryFn: async () => {
-      const { data, error } = await (supabase as any)
+      const { data, error } = await (supabase)
         .from("platform_control")
         .select("principal_admin_id")
         .eq("id", true)
         .single();
       if (error) throw error;
-      return data as { principal_admin_id: string | null };
+      return data;
     },
   });
   const list = useQuery({
     queryKey: ["artist-payouts"],
     queryFn: async () => {
-      const { data, error } = await (supabase as any)
+      const { data, error } = await (supabase)
         .from("artist_payout_requests")
         .select("*")
         .order("requested_at", { ascending: false });
@@ -942,7 +945,7 @@ function PayoutsAdmin() {
 
   async function claim() {
     setClaiming(true);
-    const { error } = await (supabase as any).rpc("claim_principal_admin", {});
+    const { error } = await (supabase).rpc("claim_principal_admin", {});
     setClaiming(false);
     if (error) {
       toast.error(error.message);
@@ -954,7 +957,7 @@ function PayoutsAdmin() {
   }
 
   async function review(id: string, decision: "approved" | "rejected") {
-    const { error } = await (supabase as any).rpc("review_artist_payout", {
+    const { error } = await (supabase).rpc("review_artist_payout", {
       p_request_id: id,
       p_decision: decision,
       p_note: note || null,
@@ -974,7 +977,7 @@ function PayoutsAdmin() {
   async function markPaid(id: string) {
     const reference = prompt("Referência/comprovativo da transferência:");
     if (!reference?.trim()) return;
-    const { error } = await (supabase as any).rpc("mark_artist_payout_paid", {
+    const { error } = await (supabase).rpc("mark_artist_payout_paid", {
       p_request_id: id,
       p_reference: reference.trim(),
     });
@@ -1036,7 +1039,7 @@ function PayoutsAdmin() {
         ) : !list.data?.length ? (
           <EmptyState title="Ainda não existem pedidos de levantamento." />
         ) : (
-          list.data.map((r: any) => (
+          list.data.map((r) => (
             <div key={r.id} className="rounded-xl border border-border bg-card p-4">
               <div className="flex flex-wrap justify-between gap-2">
                 <strong>{formatKz(Number(r.amount_kz))}</strong>

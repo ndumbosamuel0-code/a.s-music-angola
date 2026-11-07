@@ -78,7 +78,7 @@ export function PremiumCenter({ userId }: { userId: string }) {
   const subscription = useQuery({
     queryKey: ["premium-subscription", userId],
     queryFn: async () => {
-      const db = supabase as any;
+      const db = supabase;
       const { data, error } = await db
         .from("artist_premium_subscriptions")
         .select("id,status,starts_at,ends_at")
@@ -116,7 +116,7 @@ export function PremiumCenter({ userId }: { userId: string }) {
   const methods = useQuery({
     queryKey: ["premium-payment-methods"],
     queryFn: async () => {
-      const db = supabase as any;
+      const db = supabase;
       const { data, error } = await db
         .from("platform_payment_methods")
         .select("id,method_code,display_name,instructions,is_enabled")
@@ -131,7 +131,7 @@ export function PremiumCenter({ userId }: { userId: string }) {
   const orders = useQuery({
     queryKey: ["premium-orders", userId],
     queryFn: async () => {
-      const db = supabase as any;
+      const db = supabase;
       const { data, error } = await db
         .from("billing_payment_orders")
         .select("id,amount,currency,status,payment_method,provider_reference,created_at")
@@ -146,7 +146,7 @@ export function PremiumCenter({ userId }: { userId: string }) {
   const threads = useQuery({
     queryKey: ["premium-threads", userId],
     queryFn: async () => {
-      const db = supabase as any;
+      const db = supabase;
       const { data, error } = await db
         .from("billing_support_threads")
         .select("id,payment_order_id,payment_status,created_at")
@@ -161,7 +161,7 @@ export function PremiumCenter({ userId }: { userId: string }) {
     queryKey: ["premium-messages", threadId],
     enabled: !!threadId,
     queryFn: async () => {
-      const db = supabase as any;
+      const db = supabase;
       const { data, error } = await db
         .from("billing_support_messages")
         .select("id,sender_id,body,attachment_path,message_type,created_at")
@@ -188,7 +188,7 @@ export function PremiumCenter({ userId }: { userId: string }) {
       });
       if (error) throw error;
       if (!data?.order_id) throw new Error(data?.error || "Não foi possível criar o pedido.");
-      const db = supabase as any;
+      const db = supabase;
       const { data: thread, error: threadError } = await db
         .from("billing_support_threads")
         .insert({
@@ -232,7 +232,7 @@ export function PremiumCenter({ userId }: { userId: string }) {
           .upload(attachment_path, file, { contentType: file.type });
         if (error) throw error;
       }
-      const db = supabase as any;
+      const db = supabase;
       const { error } = await db.from("billing_support_messages").insert({
         thread_id: threadId,
         sender_id: userId,

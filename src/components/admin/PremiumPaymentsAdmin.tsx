@@ -106,7 +106,7 @@ export function PremiumPaymentsAdmin() {
   const q = useQuery({
     queryKey: ["admin", "premium-payments"],
     queryFn: async () => {
-      const db = supabase as any;
+      const db = supabase;
       const { data: auth } = await supabase.auth.getUser();
       if (!auth.user) return { principal: false, methods: [], orders: [] };
       const { data: control, error: controlError } = await db
@@ -165,7 +165,7 @@ export function PremiumPaymentsAdmin() {
       return;
     }
     const { data: auth } = await supabase.auth.getUser();
-    const { error } = await (supabase as any)
+    const { error } = await supabase
       .from("platform_payment_methods")
       .update({
         instructions,
@@ -185,7 +185,7 @@ export function PremiumPaymentsAdmin() {
 
   async function confirm(order: Order) {
     if (!window.confirm("Confirmaste no banco que recebeste 5.000 Kz deste pedido?")) return;
-    const { error } = await (supabase as any).rpc("confirm_manual_premium_payment", {
+    const { error } = await supabase.rpc("confirm_manual_premium_payment", {
       p_payment_order_id: order.id,
     });
     if (error) toast.error(error.message);
