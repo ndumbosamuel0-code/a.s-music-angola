@@ -34,9 +34,7 @@ export default tseslint.config(
       ],
       "react-refresh/only-export-components": ["warn", { allowConstantExport: true }],
       "@typescript-eslint/no-unused-vars": "off",
-      // Dynamic Supabase tables not yet present in generated Database types remain a warning.
-      // Keep CI green without suppressing the other TypeScript/ESLint checks.
-      "@typescript-eslint/no-explicit-any": "warn",
+      "@typescript-eslint/no-explicit-any": "error",
     },
   },
   eslintPluginPrettier,

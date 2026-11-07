@@ -1,3 +1,5 @@
-# CI lint follow-up
+# CI typing follow-up
 
-The CI fixes replace side-effect-only conditional expressions with explicit control flow. The `@typescript-eslint/no-explicit-any` rule is temporarily a warning because the generated Supabase `Database` type does not yet describe the billing, premium, platform-control, and payout tables queried by the current UI. These dynamic table accesses must be migrated to generated, schema-backed types before treating the lint debt as fully resolved.
+The Supabase `Database` types are now regenerated from the production schema after the billing and payout tables were added. The Premium, revenue, payout, and webhook code now uses typed Supabase queries and validated `unknown` payloads instead of explicit `any` casts.
+
+The CI rule `@typescript-eslint/no-explicit-any` is enforced as an error again. Remaining CI warnings are limited to React Fast Refresh export guidance and do not represent type-safety suppressions.
