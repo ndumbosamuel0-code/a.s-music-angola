@@ -36,11 +36,13 @@ function Painel() {
           <TabsTrigger value="submeter">Submeter música</TabsTrigger>
           <TabsTrigger value="submissoes">As minhas submissões</TabsTrigger>
           <TabsTrigger value="relatorios">Relatórios</TabsTrigger>
+          <TabsTrigger value="pagamentos">Pagamentos</TabsTrigger>
           <TabsTrigger value="perfil">Perfil</TabsTrigger>
         </TabsList>
         <TabsContent value="submeter"><SubmitForm userId={user.id} /></TabsContent>
         <TabsContent value="submissoes"><Submissions userId={user.id} /></TabsContent>
         <TabsContent value="relatorios"><Reports /></TabsContent>
+        <TabsContent value="pagamentos"><ArtistPayouts userId={user.id} /></TabsContent>
         <TabsContent value="perfil"><Profile userId={user.id} /></TabsContent>
       </Tabs>
     </div>
@@ -174,6 +176,42 @@ function Submissions({ userId }: { userId: string }) {
       ))}
     </ul>
   );
+}
+
+
+function ArtistPayouts({ userId }: { userId: string }) {
+  const qc = useQueryClient();
+  const [form,setForm] = useState({account_holder:"",bank_name:"",iban:"",account_number:""});
+  const account = useQuery({ queryKey:["my-payment-account",userId], queryFn:async()=>{
+    const {data,error}=await (supabase as any).from("artist_payment_accounts").select("*").eq("user_id",userId).maybeSingle();
+    if(error) throw error; return data;
+  }});
+  const ledger = useQuery({queryKey:["my-earnings",userId],queryFn:async()=>{
+    const {data,error}=await (supabase as any).from("artist_earnings_ledger").select("amount_kz").eq("artist_user_id",userId);
+    if(error) throw error; return data??[];
+  }});
+  const requests = useQuery({queryKey:["my-payout-requests",userId],queryFn:async()=>{
+    const {data,error}=await (supabase as any).from("artist_payout_requests").select("*").eq("artist_user_id",userId).order("requested_at",{ascending:false});
+    if(error) throw error; return data??[];
+  }});
+  useEffect(()=>{if(account.data)setForm({account_holder:account.data.account_holder??"",bank_name:account.data.bank_name??"",iban:account.data.iban??"",account_number:account.data.account_number??""})},[account.data]);
+  const earned=(ledger.data??[]).reduce((n:number,x:any)=>n+Number(x.amount_kz),0);
+  const reserved=(requests.data??[]).filter((x:any)=>["pending","approved"].includes(x.status)).reduce((n:number,x:any)=>n+Number(x.amount_kz),0);
+  const balance=Math.max(0,earned-reserved);
+  async function save(e:React.FormEvent){e.preventDefault();const {error}=await (supabase as any).rpc("save_artist_payment_account",{p_account_holder:form.account_holder,p_bank_name:form.bank_name,p_iban:form.iban||null,p_account_number:form.account_number||null});if(error)toast.error(error.message);else{toast.success("Dados bancários guardados com segurança.");qc.invalidateQueries({queryKey:["my-payment-account"]})}}
+  async function request(){const {error}=await (supabase as any).rpc("request_artist_payout");if(error)toast.error(error.message);else{toast.success("Pedido enviado e aguarda aprovação do administrador principal.");qc.invalidateQueries({queryKey:["my-payout-requests"]})}}
+  return <div className="mt-4 space-y-4">
+    <div className="rounded-xl border border-border bg-card p-5"><p className="text-sm text-muted-foreground">Saldo disponível registado</p><p className="mt-1 text-3xl font-bold text-gold">{formatKz(balance)}</p><p className="mt-1 text-xs text-muted-foreground">Mínimo para solicitar: 50.000 Kz. Só entram ganhos reais lançados pela administração.</p><Button className="mt-3" variant="gold" disabled={balance<50000} onClick={request}>Solicitar levantamento</Button></div>
+    <form onSubmit={save} className="grid gap-3 rounded-xl border border-border bg-card p-5 sm:grid-cols-2"><h2 className="font-bold sm:col-span-2">Dados bancários para receber</h2>
+      <div><Label>Titular da conta</Label><Input required value={form.account_holder} onChange={e=>setForm({...form,account_holder:e.target.value})}/></div>
+      <div><Label>Banco</Label><Input required value={form.bank_name} onChange={e=>setForm({...form,bank_name:e.target.value})}/></div>
+      <div><Label>IBAN</Label><Input value={form.iban} onChange={e=>setForm({...form,iban:e.target.value})}/></div>
+      <div><Label>Número da conta (alternativa ao IBAN)</Label><Input value={form.account_number} onChange={e=>setForm({...form,account_number:e.target.value})}/></div>
+      <Button type="submit" variant="gold" className="sm:col-span-2 sm:w-fit">Guardar dados bancários</Button>
+    </form>
+    <div className="rounded-xl border border-border bg-card p-5"><h2 className="font-bold">Histórico de pedidos</h2>{!requests.data?.length?<p className="mt-2 text-sm text-muted-foreground">Ainda não fizeste pedidos.</p>:requests.data.map((r:any)=><div key={r.id} className="flex justify-between gap-3 border-t border-border py-3 text-sm"><span>{formatKz(Number(r.amount_kz))} · {new Date(r.requested_at).toLocaleDateString("pt-AO")}</span><Badge>{({pending:"Pendente",approved:"Aprovado",rejected:"Recusado",paid:"Pago",failed:"Falhado"} as Record<string,string>)[r.status]??r.status}</Badge></div>)}</div>
+    <p className="text-xs text-muted-foreground">Neste momento não há integração com bancos: o pedido é registado, aprovado pelo administrador principal e a transferência é feita externamente.</p>
+  </div>;
 }
 
 function Reports() {
