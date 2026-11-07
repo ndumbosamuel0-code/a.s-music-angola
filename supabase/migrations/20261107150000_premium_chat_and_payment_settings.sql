@@ -184,3 +184,7 @@ comment on table public.billing_support_threads is
  'Chat individual entre cada artista e o administrador principal para pagamentos e comprovativos.';
 comment on table public.billing_support_messages is
  'Mensagens e comprovativos no chat; anexos no bucket privado billing-proofs.';
+
+
+-- Explicit table privileges for the principal-admin RLS policy above.
+grant insert, update, delete on public.platform_payment_methods to authenticated;
