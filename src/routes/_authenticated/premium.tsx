@@ -1,6 +1,5 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { PremiumCenter } from "@/components/PremiumCenter";
-import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated/premium")({
   beforeLoad: async ({ context }) => {
