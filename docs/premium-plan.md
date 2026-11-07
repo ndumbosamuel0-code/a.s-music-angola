@@ -25,8 +25,12 @@ A subscrição é criada por um trigger PostgreSQL apenas quando uma ordem Premi
 
 A aplicação considera a subscrição activa apenas enquanto o estado é active e ends_at é posterior ao momento actual. Ao passar da data, as vantagens deixam de ser concedidas automaticamente, a conta regressa ao plano normal e o perfil/histórico do artista são preservados. Não é necessária uma acção manual do administrador.\n\nO cliente não tem permissões para marcar um pedido como pago. Para transferência bancária manual, só o administrador principal pode confirmar depois de verificar o crédito na conta. A confirmação dispara a mesma activação automática.
 
+## Conta de recebimento pessoal e aprovação
+
+O administrador principal declarou que possui apenas uma conta bancária pessoal comum, sem actividade comercial registada em nome individual. A plataforma está preparada para preencher o nome pessoal do titular e os dados bancários, mas não apresenta nem aceita pagamentos enquanto não houver confirmação escrita do banco e do prestador sobre a utilização comercial dessa conta. A lista de canais aprovados permanece vazia por defeito. A aprovação de um método não implica aprovação automática dos restantes.
+
 ## Pagamentos e fornecedor
-Fornecedor recomendado: **AppyPay**, sujeito a onboarding e contrato. A AppyPay publica suporte para GPO/Multicaixa Express, Referência e UNITEL Money. O contrato e o banco de apoio são requisitos para receber pagamentos comerciais. A AppyPay indica que o comerciante necessita de conta autorizada pelo banco para GPO/REF/SDD.
+Fornecedor recomendado: **AppyPay**, sujeito a onboarding e contrato. A AppyPay publica suporte para GPO/Multicaixa Express, Referência e UNITEL Money. A elegibilidade da conta pessoal comum ainda está sob consulta por escrito. Não presumir que uma conta pessoal é aceite como conta de comerciante; confirmar os requisitos de enquadramento, titularidade e aprovação do banco de apoio antes de qualquer activação.
 
 Fontes:
 - https://www.appypay.co.ao/api-info
