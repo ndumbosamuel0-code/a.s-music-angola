@@ -30,6 +30,7 @@ function AuthPage() {
   const [name, setName] = useState("");
   const [accountType, setAccountType] = useState<"artist" | "user" | "distributor">("artist");
   const [loading, setLoading] = useState(false);
+  const [resendingConfirmation, setResendingConfirmation] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -38,6 +39,29 @@ function AuthPage() {
     });
     return () => data.subscription.unsubscribe();
   }, []);
+
+  async function resendConfirmation() {
+    const normalizedEmail = email.trim();
+    if (!normalizedEmail) {
+      toast.error("Introduz primeiro o teu email para receber um novo link.");
+      return;
+    }
+
+    setResendingConfirmation(true);
+    try {
+      const { error } = await supabase.auth.resend({
+        type: "signup",
+        email: normalizedEmail,
+        options: { emailRedirectTo: `${window.location.origin}/auth` },
+      });
+      if (error) throw error;
+      toast.success("Enviámos um novo link de confirmação. Usa o email mais recente.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Não foi possível reenviar o email de confirmação.");
+    } finally {
+      setResendingConfirmation(false);
+    }
+  }
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -76,7 +100,7 @@ function AuthPage() {
         email,
         password,
         options: {
-          emailRedirectTo: window.location.origin,
+          emailRedirectTo: `${window.location.origin}/auth`,
           // The database trigger accepts only artist or user; public sign-up can never grant admin.
           data: { full_name: name, account_type: accountType },
         },
@@ -146,6 +170,14 @@ function AuthPage() {
           <>
             <button type="button" className="mt-3 w-full text-sm text-muted-foreground hover:text-gold" onClick={() => setMode("forgot")}>
               Esqueceste-te da palavra-passe?
+            </button>
+            <button
+              type="button"
+              className="mt-2 w-full text-sm text-gold hover:underline disabled:opacity-50"
+              disabled={loading || resendingConfirmation}
+              onClick={resendConfirmation}
+            >
+              {resendingConfirmation ? "A reenviar…" : "Reenviar email de confirmação"}
             </button>
             <div className="my-4 text-center text-xs text-muted-foreground">ou</div>
             <div className="space-y-2">
