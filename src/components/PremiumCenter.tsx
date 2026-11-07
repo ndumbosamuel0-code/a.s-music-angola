@@ -176,7 +176,7 @@ export function PremiumCenter({ userId }: { userId: string }) {
       {threadId && <><div className="max-h-72 space-y-3 overflow-y-auto rounded-lg bg-muted/30 p-3">{messages.data?.map(m=><div key={m.id} className={"max-w-[90%] rounded-lg p-3 text-sm "+(m.sender_id===userId?"ml-auto bg-gold/10":"bg-muted")}><p>{m.body||"Comprovativo enviado"}</p>{m.attachment_path&&<button className="mt-2 inline-flex items-center gap-1 text-xs underline" onClick={()=>openAttachment(m.attachment_path!)}><Paperclip className="h-3 w-3"/>Abrir anexo</button>}<p className="mt-1 text-[10px] text-muted-foreground">{new Date(m.created_at).toLocaleString("pt-AO")}</p></div>)}</div>
         <form onSubmit={sendMessage} className="space-y-2"><Textarea value={message} onChange={e=>setMessage(e.target.value)} placeholder="Escreve uma mensagem…" maxLength={5000}/><Input type="file" accept="image/jpeg,image/png,application/pdf" onChange={e=>setFile(e.target.files?.[0]||null)}/><Button type="submit" disabled={busy||(!message.trim()&&!file)}>{busy?"A enviar…":"Enviar mensagem / comprovativo"}</Button></form>
       </>}
-      <p className="text-xs text-muted-foreground">Um comprovativo não confirma automaticamente a entrada do dinheiro. Transferências manuais ficam em análise até confirmação bancária; pagamentos AppyPay serão confirmados pela API e webhook após configuração.</p>
+      <p className="text-xs text-muted-foreground">Um comprovativo não confirma automaticamente a entrada do dinheiro. Neste momento, todos os pedidos ficam em análise manual. A confirmação automática AppyPay só será activada depois de concluir e testar a integração comercial.</p>
     </section>
   </div>;
 }
