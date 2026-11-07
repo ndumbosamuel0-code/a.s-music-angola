@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 
 type Method={id:string;method_code:string;display_name:string;instructions:Record<string,string>;is_enabled:boolean};
-type Order={id:string;user_id:string;amount:number;currency:string;status:string;payment_method:string|null;provider_reference:string|null;created_at:string};
+type Order={id:string;user_id:string;amount:number;currency:string;status:string;payment_method:string|null;provider:string;provider_reference:string|null;created_at:string};
 
 export function PremiumPaymentsAdmin(){
  const qc=useQueryClient(); const [draft,setDraft]=useState<Record<string,string>>({});
@@ -18,7 +18,7 @@ export function PremiumPaymentsAdmin(){
   if(c?.principal_admin_id!==auth.user.id) return {principal:false,methods:[],orders:[]};
   const [{data:methods,error:me},{data:orders,error:oe}]=await Promise.all([
    db.from("platform_payment_methods").select("id,method_code,display_name,instructions,is_enabled").order("display_name"),
-   db.from("billing_payment_orders").select("id,user_id,amount,currency,status,payment_method,provider_reference,created_at").eq("item_code","premium_monthly").order("created_at",{ascending:false}).limit(100)
+   db.from("billing_payment_orders").select("id,user_id,amount,currency,status,payment_method,provider,provider_reference,created_at").eq("item_code","premium_monthly").order("created_at",{ascending:false}).limit(100)
   ]); if(me) throw me; if(oe) throw oe; return {principal:true,methods:(methods||[]) as Method[],orders:(orders||[]) as Order[]};
  }});
  async function save(m:Method,enabled:boolean){
@@ -41,7 +41,7 @@ export function PremiumPaymentsAdmin(){
    <div className="mt-4 space-y-4">{q.data.methods.map(m=><MethodEditor key={m.id} method={m} value={draft[m.id]??Object.entries(m.instructions||{}).map(([k,v])=>k+": "+v).join("\n")} onChange={v=>setDraft(d=>({...d,[m.id]:v}))} onSave={enabled=>save(m,enabled)}/>)}</div>
   </section>
   <section className="rounded-xl border bg-card p-4"><h2 className="font-semibold">Pedidos Premium</h2><p className="mt-1 text-xs text-muted-foreground">Só confirma manualmente transferências depois de veres o crédito na conta comercial. Pagamentos de gateway serão confirmados pelo webhook.</p>
-   <div className="mt-3 space-y-3">{q.data.orders.map(o=><div key={o.id} className="flex flex-wrap items-center justify-between gap-3 border-b pb-3 last:border-0"><div><p className="text-sm font-medium">{new Intl.NumberFormat("pt-AO").format(Number(o.amount))} Kz · {o.payment_method||"—"}</p><p className="text-xs text-muted-foreground">Utilizador {o.user_id.slice(0,8)} · {new Date(o.created_at).toLocaleString("pt-AO")}</p></div><div className="flex items-center gap-2"><Badge variant={o.status==="paid"?"default":"secondary"}>{o.status}</Badge>{o.status==="pending"&&o.payment_method==="bank_transfer"&&<Button size="sm" onClick={()=>confirm(o)}>Confirmar recebimento</Button>}</div></div>)}{!q.data.orders.length&&<p className="text-sm text-muted-foreground">Sem pedidos.</p>}</div>
+   <div className="mt-3 space-y-3">{q.data.orders.map(o=><div key={o.id} className="flex flex-wrap items-center justify-between gap-3 border-b pb-3 last:border-0"><div><p className="text-sm font-medium">{new Intl.NumberFormat("pt-AO").format(Number(o.amount))} Kz · {o.payment_method||"—"}</p><p className="text-xs text-muted-foreground">Utilizador {o.user_id.slice(0,8)} · {new Date(o.created_at).toLocaleString("pt-AO")}</p></div><div className="flex items-center gap-2"><Badge variant={o.status==="paid"?"default":"secondary"}>{o.status}</Badge>{o.status==="pending"&&o.provider==="manual"&&<Button size="sm" onClick={()=>confirm(o)}>Confirmar recebimento</Button>}</div></div>)}{!q.data.orders.length&&<p className="text-sm text-muted-foreground">Sem pedidos.</p>}</div>
   </section>
  </div>;
 }
