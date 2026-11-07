@@ -79,7 +79,11 @@ function useRefresh() {
   return () => qc.invalidateQueries({ queryKey: ["admin"] });
 }
 function err(e: { message: string } | null, ok = "Guardado.") {
-  e ? toast.error(e.message) : toast.success(ok);
+  if (e) {
+    toast.error(e.message);
+    return;
+  }
+  toast.success(ok);
 }
 
 function Admin() {
