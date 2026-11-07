@@ -88,10 +88,16 @@ export function PlatformRevenueAdmin() {
     <div className="mt-4 space-y-5">
       <div className="rounded-xl border border-border bg-card p-4">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <div><h2 className="font-semibold">Receitas da plataforma</h2><p className="text-sm text-muted-foreground">Modelo: todas as fontes · Publicidade: leve</p></div>
+          <div><h2 className="font-semibold">Receitas da plataforma</h2><p className="text-sm text-muted-foreground">Modelo previsto: publicidade leve e outras fontes aprovadas</p></div>
           <Badge variant="outline">Registo por eventos confirmados</Badge>
         </div>
-        <p className="mt-2 text-xs text-muted-foreground">O tempo de permanência e os cliques não são convertidos em dinheiro. Só entram valores comunicados por fornecedores e pagamentos reais, com referência única.</p>
+        <p className="mt-2 text-xs text-muted-foreground">O tempo de permanência, as visitas e os cliques não são convertidos automaticamente em dinheiro. Só entram valores comunicados por fornecedores e pagamentos reais, com referência única.</p>
+      </div>
+
+      <div role="status" className="rounded-xl border border-warning/50 bg-warning/5 p-4">
+        <div className="flex items-center gap-2 font-semibold"><AlertCircle className="h-5 w-5" /> Monetização por visualizações ainda não activada</div>
+        <p className="mt-2 text-sm text-muted-foreground">Neste momento não existe uma rede publicitária ligada, contrato de monetização aprovado, nem liquidações recebidas por visualizações. Por isso, a A.S MUSIC ainda não pode prometer nem apresentar ganhos por navegação, reprodução ou visualização a artistas e distribuidoras.</p>
+        <p className="mt-2 text-sm text-muted-foreground">A activação exige aprovação escrita do fornecedor para o site e para Angola, validação do método de recebimento, integração de relatórios/webhooks e confirmação dos fundos efectivamente pagos à plataforma. Só depois serão calculadas e disponibilizadas as participações previstas nos contratos.</p>
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
