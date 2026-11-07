@@ -29,6 +29,13 @@
       "when": 1793970759192,
       "tag": "0003_tighten_rights_and_demo_reports",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1794013986929,
+      "tag": "0004_sync_artist_public_profile",
+      "breakpoints": true
     }
   ]
 }

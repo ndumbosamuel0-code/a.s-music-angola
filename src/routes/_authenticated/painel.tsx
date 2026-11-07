@@ -13,6 +13,7 @@ import { EmptyState } from "@/components/TrackCard";
 import { supabase } from "@/integrations/supabase/client";
 import { useGenres } from "@/lib/data";
 import { formatKz, splitRevenue } from "@/lib/finance";
+import { validateUpload } from "@/lib/upload";
 
 export const Route = createFileRoute("/_authenticated/painel")({
   head: () => ({ meta: [
@@ -32,17 +33,15 @@ function Painel() {
     <div className="mx-auto max-w-4xl px-4 py-10">
       <h1 className="text-3xl font-bold">A minha conta</h1>
       <Tabs defaultValue="submeter" className="mt-6">
-        <TabsList className="flex-wrap">
+        <TabsList className="h-auto flex-wrap">
           <TabsTrigger value="submeter">Submeter música</TabsTrigger>
           <TabsTrigger value="submissoes">As minhas submissões</TabsTrigger>
           <TabsTrigger value="relatorios">Relatórios</TabsTrigger>
-          <TabsTrigger value="pagamentos">Pagamentos</TabsTrigger>
           <TabsTrigger value="perfil">Perfil</TabsTrigger>
         </TabsList>
         <TabsContent value="submeter"><SubmitForm userId={user.id} /></TabsContent>
         <TabsContent value="submissoes"><Submissions userId={user.id} /></TabsContent>
         <TabsContent value="relatorios"><Reports /></TabsContent>
-        <TabsContent value="pagamentos"><ArtistPayouts userId={user.id} /></TabsContent>
         <TabsContent value="perfil"><Profile userId={user.id} /></TabsContent>
       </Tabs>
     </div>
