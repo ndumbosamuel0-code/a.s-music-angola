@@ -17,6 +17,8 @@ import { canApproveTrack, canDownloadTrack } from "@/lib/rights";
 import { DistributorApplicationsAdmin } from "@/components/admin/DistributorApplicationsAdmin";
 import { DistributionAdmin } from "@/components/admin/DistributionAdmin";
 import { PlatformRevenueAdmin } from "@/components/admin/PlatformRevenueAdmin";
+import { PremiumPaymentsAdmin } from "@/components/admin/PremiumPaymentsAdmin";
+import { PremiumSupportAdmin } from "@/components/admin/PremiumSupportAdmin";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   // UI guard only; every write is enforced by RLS + database triggers.
@@ -34,7 +36,7 @@ export const Route = createFileRoute("/_authenticated/admin")({
 });
 
 const STATUS: Record<string, string> = { pending: "Pendente", approved: "Aprovada", rejected: "Rejeitada", removed: "Removida" };
-const ADMIN_TABS: [string, string][] = [["geral", "Visão geral"], ["pendentes", "Pendentes"], ["catalogo", "Catálogo"], ["artistas", "Artistas"], ["generos", "Géneros"], ["direitos", "Direitos/licenças"], ["relatorios", "Relatórios"], ["administradores", "Administradores"], ["levantamentos", "Levantamentos"], ["distribuidoras", "Distribuidoras"], ["distribuicao", "Distribuição"], ["receitas", "Receitas da plataforma"], ["definicoes", "Definições"]];
+const ADMIN_TABS: [string, string][] = [["geral", "Visão geral"], ["pendentes", "Pendentes"], ["catalogo", "Catálogo"], ["artistas", "Artistas"], ["generos", "Géneros"], ["direitos", "Direitos/licenças"], ["relatorios", "Relatórios"], ["administradores", "Administradores"], ["levantamentos", "Levantamentos"], ["distribuidoras", "Distribuidoras"], ["distribuicao", "Distribuição"], ["receitas", "Receitas da plataforma"], ["premium", "Premium e pagamentos"], ["definicoes", "Definições"]];
 const sel = "h-9 rounded-md border border-input bg-background px-2 text-sm";
 
 function useAdmin<T>(key: string, fn: () => PromiseLike<{ data: T | null; error: unknown }>) {
@@ -65,6 +67,7 @@ function Admin() {
         <TabsContent value="distribuidoras"><DistributorApplicationsAdmin /></TabsContent>
         <TabsContent value="distribuicao"><DistributionAdmin /></TabsContent>
         <TabsContent value="receitas"><PlatformRevenueAdmin /></TabsContent>
+        <TabsContent value="premium"><PremiumPaymentsAdmin /><div className="mt-8"><PremiumSupportAdmin /></div></TabsContent>
         <TabsContent value="definicoes"><SettingsAdmin /></TabsContent>
       </Tabs>
     </div>
@@ -169,14 +172,21 @@ function AdminsAdmin() {
   );
 }
 
-type AdminTrack = { id: string; title: string; artist_name: string; status: Database["public"]["Enums"]["track_status"]; featured: boolean; download_allowed: boolean; license_id: string | null; is_demo: boolean; audio_path: string | null; rights_holders: string | null; rights_confirmed: boolean; consent_download: boolean; consent_streaming: boolean; artist_id: string | null; admin_notes: string | null };
+type AdminTrack = { id: string; title: string; artist_name: string; status: Database["public"]["Enums"]["track_status"]; featured: boolean; download_allowed: boolean; license_id: string | null; is_demo: boolean; audio_path: string | null; rights_holders: string | null; rights_confirmed: boolean; submitted_by: string | null; premium_priority?: boolean; consent_download: boolean; consent_streaming: boolean; artist_id: string | null; admin_notes: string | null };
 
 function TracksAdmin({ onlyPending }: { onlyPending?: boolean }) {
   const refresh = useRefresh();
-  const tracks = useAdmin<AdminTrack[]>(onlyPending ? "pending" : "tracks", () => {
-    let q = supabase.from("tracks").select("id,title,artist_name,status,featured,download_allowed,license_id,is_demo,audio_path,rights_holders,rights_confirmed,consent_download,consent_streaming,artist_id,admin_notes").order("created_at", { ascending: false });
+  const tracks = useAdmin<AdminTrack[]>(onlyPending ? "pending" : "tracks", async () => {
+    let q = supabase.from("tracks").select("id,title,artist_name,status,featured,download_allowed,license_id,is_demo,audio_path,rights_holders,rights_confirmed,submitted_by,consent_download,consent_streaming,artist_id,admin_notes").order("created_at", { ascending: false });
     if (onlyPending) q = q.eq("status", "pending");
-    return q;
+    const { data, error } = await q;
+    if (error) return { data: null, error };
+    const { data: activeSubs, error: subsError } = await (supabase as any)
+      .from("artist_premium_subscriptions").select("user_id").eq("status", "active").gt("ends_at", new Date().toISOString());
+    if (subsError) return { data: null, error: subsError };
+    const premiumUsers = new Set((activeSubs ?? []).map((s: { user_id: string }) => s.user_id));
+    return { data: (data ?? []).map((track: AdminTrack) => ({ ...track, premium_priority: !!track.submitted_by && premiumUsers.has(track.submitted_by) }))
+      .sort((a: AdminTrack, b: AdminTrack) => Number(!!b.premium_priority) - Number(!!a.premium_priority)), error: null };
   });
   const licenses = useAdmin<{ id: string; holder: string; verification_status: string; allows_streaming: boolean; allows_download: boolean; starts_at: string | null; ends_at: string | null }[]>("licenses-min", () => supabase.from("licenses").select("id,holder,verification_status,allows_streaming,allows_download,starts_at,ends_at"));
   const artists = useAdmin<{ id: string; name: string }[]>("artists-min", () => supabase.from("artists").select("id,name").order("name"));
@@ -201,7 +211,7 @@ function TracksAdmin({ onlyPending }: { onlyPending?: boolean }) {
         <div key={t.id} className="space-y-3 rounded-xl border border-border bg-card p-4">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div>
-              <p className="font-medium">{t.title} {t.is_demo && <Badge variant="outline">Demo</Badge>}</p>
+              <p className="font-medium">{t.title} {t.is_demo && <Badge variant="outline">Demo</Badge>} {t.premium_priority && <Badge className="ml-1">Premium · prioridade</Badge>}</p>
               <p className="text-xs text-muted-foreground">{t.artist_name} · Titulares: {t.rights_holders || "—"} · Consentimentos: {t.consent_streaming ? "streaming" : ""} {t.consent_download ? "download" : ""}</p>
             </div>
             <Badge variant={t.status === "approved" ? "default" : "secondary"}>{STATUS[t.status]}</Badge>
