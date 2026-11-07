@@ -40,7 +40,7 @@ Fontes:
 - API Key para GPO e/ou REF.
 - Resource ID do ambiente.
 - Credenciais distintas de Sandbox e Produção.
-- Acesso a consulta GET /charges/{id} e webhook configurado no portal.
+- Acesso a consulta GET /charges/{id} e webhook configurado no portal.\n- Segredo server-side `APPYPAY_ACCESS_TOKEN` para a função webhook (até estar implementada a renovação OAuth2 automática); nunca guardar este token em tabelas ou no frontend.
 
 Guardar credenciais exclusivamente em Supabase Edge Function Secrets. Nunca no frontend, GitHub, chat, tabela de instruções ou ficheiros públicos.
 
