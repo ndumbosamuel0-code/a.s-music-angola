@@ -13,10 +13,10 @@ type Order = { id: string; amount: number; currency: string; status: string; pay
 type Thread = { id: string; payment_order_id: string | null; payment_status: string; created_at: string };
 type Message = { id: string; sender_id: string; body: string | null; attachment_path: string | null; message_type: string; created_at: string };
 
-const methodLabels: Record<string,string> = { multicaixa_express: "Multicaixa Express", bank_transfer: "Transferência bancária", payment_reference: "Pagamento por referência", unitel_money: "UNITEL Money" };
+// Lista vazia até aprovação escrita. Activar apenas os canais autorizados pelo banco/prestador.\nconst APPROVED_PAYMENT_METHODS: string[] = [];\nconst methodLabels: Record<string,string> = { multicaixa_express: "Multicaixa Express", bank_transfer: "Transferência bancária", payment_reference: "Pagamento por referência", unitel_money: "UNITEL Money" };
 const instructionLabels: Record<string,string> = {
   phone: "Número de pagamento",
-  account_holder: "Titular",
+  account_holder: "Titular da conta",
   bank_name: "Banco",
   iban: "IBAN",
   account_number: "Número da conta",
@@ -64,7 +64,7 @@ export function PremiumCenter({ userId }: { userId: string }) {
       const db = supabase as any;
       const { data, error } = await db.from("platform_payment_methods").select("id,method_code,display_name,instructions,is_enabled").eq("is_enabled",true).order("display_name");
       if (error) throw error;
-      return (data ?? []) as Method[];
+      return ((data ?? []) as Method[]).filter((item) => APPROVED_PAYMENT_METHODS.includes(item.method_code));
     },
   });
   const orders = useQuery({
@@ -184,7 +184,7 @@ export function PremiumCenter({ userId }: { userId: string }) {
     {!active && <section className="rounded-xl border border-border bg-card p-5 space-y-3">
       <h3 className="font-semibold">Activar Premium</h3>
       <p className="text-sm text-muted-foreground">Escolhe um método que esteja activo. Os métodos só aparecem depois de a administração configurar os dados de recebimento.</p>
-      {methods.isLoading ? <div className="h-10 animate-pulse rounded bg-secondary"/> : !methods.data?.length ? <p className="rounded-lg bg-muted p-3 text-sm">Ainda não há métodos de pagamento activos. Contacta a administração pelo chat ou volta mais tarde.</p> :
+      {methods.isLoading ? <div className="h-10 animate-pulse rounded bg-secondary"/> : !methods.data?.length ? <p className="rounded-lg bg-muted p-3 text-sm">Os métodos de pagamento ainda não estão disponíveis. A A.S MUSIC ANGOLA está a aguardar confirmação do banco e do prestador para utilizar a conta de recebimento com segurança. Contacta a administração pelo chat ou volta mais tarde.</p> :
         <><div className="grid gap-2 sm:grid-cols-2">{methods.data.map(m=><button type="button" key={m.id} onClick={()=>setMethod(m.method_code)} className={"rounded-lg border p-3 text-left text-sm "+(method===m.method_code?"border-gold bg-gold/5":"border-border")}>{m.display_name}</button>)}</div>
           {selectedMethod && <div className="rounded-lg bg-muted/60 p-3 text-sm"><p className="font-medium">Instruções de pagamento</p>{Object.entries(selectedMethod.instructions||{}).filter(([,v])=>String(v||"").trim()).map(([k,v])=><p key={k} className="mt-1"><span className="text-muted-foreground">{instructionLabels[k]||k}: </span>{v}</p>)}</div>}
           <Button variant="gold" disabled={!method||busy} onClick={createOrder}>{busy?"A criar pedido…":"Criar pedido de 5.000 Kz"}</Button></>}
