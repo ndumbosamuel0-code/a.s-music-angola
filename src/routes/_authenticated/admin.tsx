@@ -13,7 +13,8 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 import { useGenres } from "@/lib/data";
 import { formatKz, splitRevenue } from "@/lib/finance";
-import { canApproveTrack, canDownloadTrack } from "@/lib/rights";\nimport { DistributorApplicationsAdmin } from "@/components/admin/DistributorApplicationsAdmin";
+import { canApproveTrack, canDownloadTrack } from "@/lib/rights";
+import { DistributorApplicationsAdmin } from "@/components/admin/DistributorApplicationsAdmin";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   // UI guard only; every write is enforced by RLS + database triggers.
@@ -58,7 +59,8 @@ function Admin() {
         <TabsContent value="direitos"><LicensesAdmin /></TabsContent>
         <TabsContent value="relatorios"><ReportsAdmin /></TabsContent>
         <TabsContent value="administradores"><AdminsAdmin /></TabsContent>
-        <TabsContent value="levantamentos"><PayoutsAdmin /></TabsContent>\n        <TabsContent value="distribuidoras"><DistributorApplicationsAdmin /></TabsContent>
+        <TabsContent value="levantamentos"><PayoutsAdmin /></TabsContent>
+        <TabsContent value="distribuidoras"><DistributorApplicationsAdmin /></TabsContent>
         <TabsContent value="definicoes"><SettingsAdmin /></TabsContent>
       </Tabs>
     </div>
