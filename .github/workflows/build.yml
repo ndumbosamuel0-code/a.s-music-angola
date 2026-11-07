@@ -26,11 +26,11 @@ jobs:
         uses: oven-sh/setup-bun@v2
       - name: Install dependencies
         run: bun install --frozen-lockfile
-      - name: Normalize formatting for validation
-        run: bunx prettier --write .
+      - name: Format before lint
+        run: bun run format
       - name: Lint
         run: bun run lint
       - name: Unit tests
-        run: bun run test --passWithNoTests
+        run: bun run test
       - name: Production build
         run: bun run build
