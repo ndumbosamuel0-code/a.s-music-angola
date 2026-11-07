@@ -1,1 +1,7 @@
 project_id = "hvwubckihjuljlhgaial"
+
+[functions.premium-create-order]
+verify_jwt = true
+
+[functions.appypay-webhook]
+verify_jwt = false
