@@ -28,6 +28,7 @@ function AuthPage() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [name, setName] = useState("");
+  const [accountType, setAccountType] = useState<"artist" | "user">("artist");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
@@ -76,8 +77,8 @@ function AuthPage() {
         password,
         options: {
           emailRedirectTo: window.location.origin,
-          // The database trigger reads full_name from raw_user_meta_data.
-          data: { full_name: name },
+          // The database trigger accepts only artist or user; public sign-up can never grant admin.
+          data: { full_name: name, account_type: accountType },
         },
       });
       if (error) throw error;
@@ -116,7 +117,17 @@ function AuthPage() {
         </p>
         <form onSubmit={submit} className="mt-6 space-y-4">
           {mode === "up" && (
-            <div className="space-y-1"><Label htmlFor="name">Nome</Label><Input id="name" required value={name} onChange={(e) => setName(e.target.value)} /></div>
+            <>
+              <div className="space-y-1"><Label htmlFor="name">Nome</Label><Input id="name" required value={name} onChange={(e) => setName(e.target.value)} /></div>
+              <div className="space-y-1">
+                <Label htmlFor="account-type">Tipo de conta</Label>
+                <select id="account-type" value={accountType} onChange={(e) => setAccountType(e.target.value as "artist" | "user")} className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm">
+                  <option value="artist">Artista</option>
+                  <option value="user">Ouvinte</option>
+                </select>
+                <p className="text-xs text-muted-foreground">Contas de distribuidora serão activadas após criação do processo de candidatura e aprovação administrativa.</p>
+              </div>
+            </>
           )}
           {mode !== "recovery" && (
             <div className="space-y-1"><Label htmlFor="email">Email</Label><Input id="email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} /></div>
