@@ -122,6 +122,7 @@ export function PremiumPaymentsAdmin() {
               values={valuesFor(method)}
               onChange={(key, value) => setDraft((current) => ({ ...current, [method.id]: { ...valuesFor(method), [key]: value } }))}
               onSave={(enabled) => save(method, enabled)}
+              canActivate={APPROVED_PAYMENT_METHODS.includes(method.method_code)}
             />
           ))}
         </div>
