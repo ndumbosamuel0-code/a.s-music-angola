@@ -28,7 +28,7 @@ function AuthPage() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [name, setName] = useState("");
-  const [accountType, setAccountType] = useState<"artist" | "user">("artist");
+  const [accountType, setAccountType] = useState<"artist" | "user" | "distributor">("artist");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
@@ -121,11 +121,12 @@ function AuthPage() {
               <div className="space-y-1"><Label htmlFor="name">Nome</Label><Input id="name" required value={name} onChange={(e) => setName(e.target.value)} /></div>
               <div className="space-y-1">
                 <Label htmlFor="account-type">Tipo de conta</Label>
-                <select id="account-type" value={accountType} onChange={(e) => setAccountType(e.target.value as "artist" | "user")} className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm">
+                <select id="account-type" value={accountType} onChange={(e) => setAccountType(e.target.value as "artist" | "user" | "distributor")} className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm">
                   <option value="artist">Artista</option>
                   <option value="user">Ouvinte</option>
+                  <option value="distributor">Distribuidora</option>
                 </select>
-                <p className="text-xs text-muted-foreground">Contas de distribuidora serão activadas após criação do processo de candidatura e aprovação administrativa.</p>
+                <p className="text-xs text-muted-foreground">Ao escolher Distribuidora, cria uma conta normal e depois envia a candidatura para aprovação do administrador principal.</p>
               </div>
             </>
           )}

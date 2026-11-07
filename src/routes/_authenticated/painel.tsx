@@ -14,6 +14,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useGenres } from "@/lib/data";
 import { formatKz, splitRevenue } from "@/lib/finance";
 import { validateUpload } from "@/lib/upload";
+import { DistributorApplication } from "@/components/DistributorApplication";
 
 export const Route = createFileRoute("/_authenticated/painel")({
   head: () => ({ meta: [
@@ -38,11 +39,13 @@ function Painel() {
           <TabsTrigger value="submissoes">As minhas submissões</TabsTrigger>
           <TabsTrigger value="relatorios">Relatórios</TabsTrigger>
           <TabsTrigger value="perfil">Perfil</TabsTrigger>
+          <TabsTrigger value="distribuidora">Distribuidora</TabsTrigger>
         </TabsList>
         <TabsContent value="submeter"><SubmitForm userId={user.id} /></TabsContent>
         <TabsContent value="submissoes"><Submissions userId={user.id} /></TabsContent>
         <TabsContent value="relatorios"><Reports /></TabsContent>
         <TabsContent value="perfil"><Profile userId={user.id} /></TabsContent>
+        <TabsContent value="distribuidora"><DistributorApplication userId={user.id} email={user.email ?? ""} /></TabsContent>
       </Tabs>
     </div>
   );
