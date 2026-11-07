@@ -57,14 +57,12 @@ export function PremiumSupportAdmin() {
     if (!threadId || !body.trim()) return;
     const { data } = await supabase.auth.getUser();
     if (!data.user) return;
-    const { error } = await (supabase as any)
-      .from("billing_support_messages")
-      .insert({
-        thread_id: threadId,
-        sender_id: data.user.id,
-        body: body.trim(),
-        message_type: "message",
-      });
+    const { error } = await (supabase as any).from("billing_support_messages").insert({
+      thread_id: threadId,
+      sender_id: data.user.id,
+      body: body.trim(),
+      message_type: "message",
+    });
     if (error) toast.error(error.message);
     else {
       setBody("");
