@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { BadgeCheck, Crown, MessageCircle, Paperclip, RefreshCw, ShieldCheck, Sparkles } from "lucide-react";
+import { BadgeCheck, Crown, MessageCircle, Paperclip, RefreshCw, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
