@@ -12,7 +12,7 @@
 1. Selo de estado Premium na área pessoal do artista.
 2. Chat individual e privado com a administração para suporte e comprovativos.
 3. Histórico de pedidos e estado dos pagamentos.
-4. Acompanhamento das submissões já existente na conta do artista.\n5. Prioridade na fila interna de revisão das faixas submetidas enquanto a subscrição estiver activa (não garante aprovação nem publicação).
+4. Estatísticas de carreira: total de faixas, aprovadas, pendentes e rejeitadas.\n5. Acompanhamento das submissões e histórico de pedidos.\n6. Renovação sem perda dos dias ainda activos: a nova subscrição começa no fim do período em vigor.\n5. Prioridade na fila interna de revisão das faixas submetidas enquanto a subscrição estiver activa (não garante aprovação nem publicação).
 
 Não anunciar publicação garantida, distribuição em lojas, royalties, downloads ilimitados, destaque garantido ou aprovação automática como vantagem Premium. Esses itens dependem de contratos, direitos, inventário e funcionalidades adicionais que ainda não estão activos.
 
@@ -23,7 +23,7 @@ A subscrição é criada por um trigger PostgreSQL apenas quando uma ordem Premi
 - não duplica uma ordem já processada;
 - actualiza o estado do chat ligado ao pedido.
 
-O cliente não tem permissões para marcar um pedido como pago. Para transferência bancária manual, só o administrador principal pode confirmar depois de verificar o crédito na conta. A confirmação dispara a mesma activação automática.
+A aplicação considera a subscrição activa apenas enquanto o estado é active e ends_at é posterior ao momento actual. Ao passar da data, as vantagens deixam de ser concedidas automaticamente, a conta regressa ao plano normal e o perfil/histórico do artista são preservados. Não é necessária uma acção manual do administrador.\n\nO cliente não tem permissões para marcar um pedido como pago. Para transferência bancária manual, só o administrador principal pode confirmar depois de verificar o crédito na conta. A confirmação dispara a mesma activação automática.
 
 ## Pagamentos e fornecedor
 Fornecedor recomendado: **AppyPay**, sujeito a onboarding e contrato. A AppyPay publica suporte para GPO/Multicaixa Express, Referência e UNITEL Money. O contrato e o banco de apoio são requisitos para receber pagamentos comerciais. A AppyPay indica que o comerciante necessita de conta autorizada pelo banco para GPO/REF/SDD.
