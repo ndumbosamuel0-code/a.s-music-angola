@@ -123,7 +123,8 @@ function AuthPage() {
                 <Label htmlFor="account-type">Tipo de conta</Label>
                 <select id="account-type" value={accountType} onChange={(e) => setAccountType(e.target.value as "artist" | "user" | "distributor")} className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm">
                   <option value="artist">Artista</option>
-                  <option value="user">Ouvinte</option>\n                  <option value="distributor">Distribuidora</option>
+                  <option value="user">Ouvinte</option>
+                  <option value="distributor">Distribuidora</option>
                 </select>
                 <p className="text-xs text-muted-foreground">Ao escolher Distribuidora, cria uma conta normal e depois envia a candidatura para aprovação do administrador principal.</p>
               </div>
