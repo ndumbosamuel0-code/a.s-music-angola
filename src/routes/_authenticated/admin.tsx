@@ -93,9 +93,9 @@ function Overview() {
 
 function AdminsAdmin() {
   const refresh = useRefresh();
-  const profiles = useAdmin<{ id: string; display_name: string | null; full_name: string | null; email: string | null }[]>(
+  const profiles = useAdmin<{ id: string; display_name: string | null; artist_name: string | null }[]>(
     "admin-candidates",
-    () => supabase.from("profiles").select("id,display_name,full_name,email").order("display_name")
+    () => supabase.from("profiles").select("id,display_name,artist_name").order("display_name")
   );
   const roles = useAdmin<{ user_id: string; role: string }[]>(
     "admin-roles",
