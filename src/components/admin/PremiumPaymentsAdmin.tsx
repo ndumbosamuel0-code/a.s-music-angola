@@ -13,6 +13,10 @@ type Method = { id: string; method_code: MethodCode; display_name: string; instr
 type Order = { id: string; user_id: string; amount: number; currency: string; status: string; payment_method: string | null; provider: string; provider_reference: string | null; created_at: string };
 type Field = { key: string; label: string; placeholder: string; required?: boolean };
 
+// Nenhum canal pode ser activado antes da aprovação escrita do banco/prestador.
+// Depois da aprovação, adicionar aqui apenas os métodos autorizados individualmente.
+const APPROVED_PAYMENT_METHODS: MethodCode[] = [];
+
 const METHOD_FIELDS: Record<MethodCode, Field[]> = {
   multicaixa_express: [
     { key: "phone", label: "Número Multicaixa Express", placeholder: "Ex.: 9XXXXXXXX", required: true },
@@ -21,7 +25,7 @@ const METHOD_FIELDS: Record<MethodCode, Field[]> = {
   ],
   bank_transfer: [
     { key: "bank_name", label: "Nome do banco", placeholder: "Ex.: BAI, BFA, BIC", required: true },
-    { key: "account_holder", label: "Titular da conta", placeholder: "Nome do titular", required: true },
+    { key: "account_holder", label: "Titular da conta pessoal do administrador principal", placeholder: "Nome completo exactamente como consta no banco", required: true },
     { key: "iban", label: "IBAN", placeholder: "AO06 ..." , required: true },
     { key: "account_number", label: "Número da conta (opcional)", placeholder: "Número da conta" },
     { key: "instructions", label: "Instruções para o artista", placeholder: "Inclui a identificação que o artista deve indicar na transferência." },
@@ -105,7 +109,7 @@ export function PremiumPaymentsAdmin() {
     <div className="mt-4 space-y-5">
       <section className="rounded-xl border bg-card p-4">
         <h2 className="font-semibold">Configurar os teus métodos de recebimento</h2>
-        <p className="mt-1 text-sm text-muted-foreground">Preenche os dados públicos que os artistas devem usar para pagar o Premium. Podes guardar os dados sem activar o método. Nunca coloques PIN, palavra-passe, códigos OTP ou chaves API nestes campos.</p>
+        <p className="mt-1 text-sm text-muted-foreground">Como a conta de recebimento é uma conta pessoal comum do administrador principal, podes preparar e guardar os dados, mas a activação está bloqueada até o banco/prestador confirmar por escrito que aceita este uso. Nunca coloques PIN, palavra-passe, códigos OTP ou chaves API nestes campos.</p>
         <div className="mt-4 space-y-4">
           {q.data.methods.map((method) => (
             <MethodEditor
@@ -141,7 +145,7 @@ export function PremiumPaymentsAdmin() {
   );
 }
 
-function MethodEditor({ method, values, onChange, onSave }: {
+function MethodEditor({ method, values, onChange, onSave, canActivate }: {
   method: Method;
   values: Record<string, string>;
   onChange: (key: string, value: string) => void;
@@ -169,7 +173,7 @@ function MethodEditor({ method, values, onChange, onSave }: {
       </div>
       <p className="mt-2 text-xs text-muted-foreground">Os dados só serão apresentados aos artistas quando este método estiver activo.</p>
       <div className="mt-3 flex flex-wrap gap-2">
-        <Button size="sm" variant="outline" onClick={() => setEnabled((current) => !current)}>{enabled ? "Desactivar" : "Activar"}</Button>
+        <Button size="sm" variant="outline" disabled={!canActivate} onClick={() => setEnabled((current) => !current)}>{canActivate ? (enabled ? "Desactivar" : "Activar") : "Activação bloqueada"}</Button>
         <Button size="sm" onClick={() => onSave(enabled)}>Guardar dados</Button>
       </div>
     </div>
