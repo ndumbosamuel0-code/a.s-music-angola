@@ -530,7 +530,8 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      claim_principal_admin: { Args: never; Returns: undefined }\n      review_distributor_application: { Args: { p_application_id: string; p_decision: string; p_note?: string | null }; Returns: undefined }
+      claim_principal_admin: { Args: never; Returns: undefined }
+      review_distributor_application: { Args: { p_application_id: string; p_decision: string; p_note?: string | null }; Returns: undefined }
       has_role: { Args: { _role: string; _user_id: string }; Returns: boolean }
       mark_artist_payout_paid: {
         Args: { p_reference: string; p_request_id: string }
