@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as ArtistasRouteImport } from './routes/artistas'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as ContactoRouteImport } from './routes/contacto'
 import { Route as DistribuicaoRouteImport } from './routes/distribuicao'
@@ -28,6 +29,11 @@ const IndexRoute = IndexRouteImport.update({
 } as any)
 const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
   id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ArtistasRoute = ArtistasRouteImport.update({
+  id: '/artistas',
+  path: '/artistas',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -78,6 +84,7 @@ const FaixaIdRoute = FaixaIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/artistas': typeof ArtistasRoute
   '/auth': typeof AuthRoute
   '/contacto': typeof ContactoRoute
   '/distribuicao': typeof DistribuicaoRoute
@@ -90,6 +97,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/artistas': typeof ArtistasRoute
   '/auth': typeof AuthRoute
   '/contacto': typeof ContactoRoute
   '/distribuicao': typeof DistribuicaoRoute
@@ -104,6 +112,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/artistas': typeof ArtistasRoute
   '/auth': typeof AuthRoute
   '/contacto': typeof ContactoRoute
   '/distribuicao': typeof DistribuicaoRoute
@@ -118,6 +127,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/artistas'
     | '/auth'
     | '/contacto'
     | '/distribuicao'
@@ -130,6 +140,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/artistas'
     | '/auth'
     | '/contacto'
     | '/distribuicao'
@@ -143,6 +154,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/_authenticated'
+    | '/artistas'
     | '/auth'
     | '/contacto'
     | '/distribuicao'
@@ -157,6 +169,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  ArtistasRoute: typeof ArtistasRoute
   AuthRoute: typeof AuthRoute
   ContactoRoute: typeof ContactoRoute
   DistribuicaoRoute: typeof DistribuicaoRoute
@@ -180,6 +193,13 @@ declare module '@tanstack/react-router' {
       path: ''
       fullPath: '/'
       preLoaderRoute: typeof AuthenticatedRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/artistas': {
+      id: '/artistas'
+      path: '/artistas'
+      fullPath: '/artistas'
+      preLoaderRoute: typeof ArtistasRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth': {
@@ -264,6 +284,7 @@ const AuthenticatedRouteRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  ArtistasRoute: ArtistasRoute,
   AuthRoute: AuthRoute,
   ContactoRoute: ContactoRoute,
   DistribuicaoRoute: DistribuicaoRoute,

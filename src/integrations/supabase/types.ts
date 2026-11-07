@@ -170,45 +170,30 @@ export type Database = {
       profiles: {
         Row: {
           artist_name: string | null
-          avatar_url: string | null
           bio: string | null
           created_at: string
           display_name: string | null
-          email: string | null
-          full_name: string | null
           id: string
           phone: string | null
           province: string | null
-          role: string
-          updated_at: string
         }
         Insert: {
           artist_name?: string | null
-          avatar_url?: string | null
           bio?: string | null
           created_at?: string
           display_name?: string | null
-          email?: string | null
-          full_name?: string | null
           id: string
           phone?: string | null
           province?: string | null
-          role?: string
-          updated_at?: string
         }
         Update: {
           artist_name?: string | null
-          avatar_url?: string | null
           bio?: string | null
           created_at?: string
           display_name?: string | null
-          email?: string | null
-          full_name?: string | null
           id?: string
           phone?: string | null
           province?: string | null
-          role?: string
-          updated_at?: string
         }
         Relationships: []
       }
@@ -362,6 +347,8 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_read_cover: { Args: { _path: string }; Returns: boolean }
+      can_stream: { Args: { _path: string }; Returns: boolean }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
