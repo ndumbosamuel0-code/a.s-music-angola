@@ -31,7 +31,7 @@ export const Route = createFileRoute("/_authenticated/admin")({
 });
 
 const STATUS: Record<string, string> = { pending: "Pendente", approved: "Aprovada", rejected: "Rejeitada", removed: "Removida" };
-const ADMIN_TABS: [string, string][] = [["geral", "Visão geral"], ["pendentes", "Pendentes"], ["catalogo", "Catálogo"], ["artistas", "Artistas"], ["generos", "Géneros"], ["direitos", "Direitos/licenças"], ["relatorios", "Relatórios"], ["administradores", "Administradores"], ["definicoes", "Definições"]];
+const ADMIN_TABS: [string, string][] = [["geral", "Visão geral"], ["pendentes", "Pendentes"], ["catalogo", "Catálogo"], ["artistas", "Artistas"], ["generos", "Géneros"], ["direitos", "Direitos/licenças"], ["relatorios", "Relatórios"], ["administradores", "Administradores"], ["levantamentos", "Levantamentos"], ["definicoes", "Definições"]];
 const sel = "h-9 rounded-md border border-input bg-background px-2 text-sm";
 
 function useAdmin<T>(key: string, fn: () => PromiseLike<{ data: T | null; error: unknown }>) {
@@ -58,6 +58,7 @@ function Admin() {
         <TabsContent value="direitos"><LicensesAdmin /></TabsContent>
         <TabsContent value="relatorios"><ReportsAdmin /></TabsContent>
         <TabsContent value="administradores"><AdminsAdmin /></TabsContent>
+        <TabsContent value="levantamentos"><PayoutsAdmin /></TabsContent>
         <TabsContent value="definicoes"><SettingsAdmin /></TabsContent>
       </Tabs>
     </div>
@@ -385,6 +386,141 @@ function ReportsAdmin() {
   );
 }
 
+
+function PayoutsAdmin() {
+  const qc = useQueryClient();
+  const [note, setNote] = useState("");
+  const [claiming, setClaiming] = useState(false);
+  const control = useQuery({
+    queryKey: ["principal-admin"],
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("platform_control")
+        .select("principal_admin_id")
+        .eq("id", true)
+        .single();
+      if (error) throw error;
+      return data as { principal_admin_id: string | null };
+    },
+  });
+  const list = useQuery({
+    queryKey: ["artist-payouts"],
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("artist_payout_requests")
+        .select("*")
+        .order("requested_at", { ascending: false });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+  const { data: userData } = useQuery({
+    queryKey: ["current-auth-user"],
+    queryFn: async () => (await supabase.auth.getUser()).data.user,
+  });
+  const isPrincipal = !!userData?.id && control.data?.principal_admin_id === userData.id;
+
+  async function claim() {
+    setClaiming(true);
+    const { error } = await (supabase as any).rpc("claim_principal_admin", {});
+    setClaiming(false);
+    if (error) {
+      toast.error(error.message);
+    } else {
+      toast.success("Esta conta ficou definida como administradora principal.");
+      await qc.invalidateQueries({ queryKey: ["principal-admin"] });
+      await qc.invalidateQueries({ queryKey: ["artist-payouts"] });
+    }
+  }
+
+  async function review(id: string, decision: "approved" | "rejected") {
+    const { error } = await (supabase as any).rpc("review_artist_payout", {
+      p_request_id: id, p_decision: decision, p_note: note || null,
+    });
+    if (error) toast.error(error.message);
+    else {
+      toast.success(decision === "approved" ? "Pedido aprovado. Falta executar a transferência." : "Pedido recusado.");
+      setNote("");
+      qc.invalidateQueries({ queryKey: ["artist-payouts"] });
+    }
+  }
+
+  async function markPaid(id: string) {
+    const reference = prompt("Referência/comprovativo da transferência:");
+    if (!reference?.trim()) return;
+    const { error } = await (supabase as any).rpc("mark_artist_payout_paid", {
+      p_request_id: id, p_reference: reference.trim(),
+    });
+    if (error) toast.error(error.message);
+    else {
+      toast.success("Pagamento registado.");
+      qc.invalidateQueries({ queryKey: ["artist-payouts"] });
+    }
+  }
+
+  return (
+    <div className="mt-4 space-y-4">
+      <div className="rounded-xl border border-border bg-card p-4">
+        <h2 className="font-bold">Administrador principal</h2>
+        {control.isLoading ? (
+          <p className="mt-1 text-sm text-muted-foreground">A verificar a configuração…</p>
+        ) : control.error ? (
+          <div className="mt-2 space-y-2">
+            <p className="text-sm text-destructive">Não foi possível consultar a configuração: {(control.error as Error).message}</p>
+            <Button size="sm" variant="silver" onClick={() => control.refetch()}>Tentar novamente</Button>
+          </div>
+        ) : control.data?.principal_admin_id ? (
+          <p className="mt-1 text-sm text-muted-foreground">
+            {isPrincipal ? "Esta conta é a administradora principal." : "A administração principal já está atribuída a outra conta."}
+          </p>
+        ) : (
+          <>
+            <p className="mt-1 text-sm text-muted-foreground">Atribui a administração principal à tua conta atual. Esta ação só pode ser feita uma vez.</p>
+            <Button className="mt-3" variant="gold" disabled={claiming} onClick={claim}>
+              {claiming ? "A definir…" : "Definir a minha conta como principal"}
+            </Button>
+          </>
+        )}
+      </div>
+
+      <div className="space-y-2">
+        <h2 className="font-bold">Pedidos de levantamento</h2>
+        {list.isLoading ? (
+          <div className="h-24 animate-pulse rounded-xl bg-secondary" />
+        ) : list.error ? (
+          <div className="space-y-2">
+            <EmptyState title="Não foi possível carregar os pedidos." text={(list.error as Error).message} />
+            <Button size="sm" variant="silver" onClick={() => list.refetch()}>Tentar novamente</Button>
+          </div>
+        ) : !list.data?.length ? (
+          <EmptyState title="Ainda não existem pedidos de levantamento." />
+        ) : list.data.map((r: any) => (
+          <div key={r.id} className="rounded-xl border border-border bg-card p-4">
+            <div className="flex flex-wrap justify-between gap-2">
+              <strong>{formatKz(Number(r.amount_kz))}</strong>
+              <Badge variant={r.status === "paid" ? "default" : "secondary"}>
+                {({ pending: "Pendente", approved: "Aprovado", rejected: "Recusado", paid: "Pago", failed: "Falhado" } as Record<string, string>)[r.status] ?? r.status}
+              </Badge>
+            </div>
+            <p className="mt-2 text-xs text-muted-foreground">Artista: {r.artist_user_id} · {new Date(r.requested_at).toLocaleString("pt-AO")}</p>
+            <p className="mt-2 text-sm">{r.account_snapshot?.account_holder} · {r.account_snapshot?.bank_name} · {r.account_snapshot?.iban || r.account_snapshot?.account_number}</p>
+            {isPrincipal && r.status === "pending" && (
+              <div className="mt-3 flex flex-wrap gap-2">
+                <Input placeholder="Observação (opcional)" value={note} onChange={(e) => setNote(e.target.value)} className="max-w-xs" />
+                <Button size="sm" variant="gold" onClick={() => review(r.id, "approved")}>Aprovar</Button>
+                <Button size="sm" variant="destructive" onClick={() => review(r.id, "rejected")}>Recusar</Button>
+              </div>
+            )}
+            {isPrincipal && r.status === "approved" && (
+              <Button className="mt-3" size="sm" onClick={() => markPaid(r.id)}>Registar transferência concluída</Button>
+            )}
+          </div>
+        ))}
+      </div>
+      <p className="text-xs text-muted-foreground">A aprovação não executa a transferência bancária. Depois de transferir manualmente, regista aqui a referência do comprovativo.</p>
+    </div>
+  );
+}
 
 function SettingsAdmin() {
   const qc = useQueryClient();
