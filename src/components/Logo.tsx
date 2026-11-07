@@ -18,7 +18,13 @@ export function Logo() {
   );
 }
 
-export function SoundWave({ active = true, className = "" }: { active?: boolean; className?: string }) {
+export function SoundWave({
+  active = true,
+  className = "",
+}: {
+  active?: boolean;
+  className?: string;
+}) {
   return (
     <span className={`inline-flex h-4 items-end gap-0.5 ${className}`} aria-hidden="true">
       {[0, 1, 2, 3].map((i) => (

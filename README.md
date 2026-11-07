@@ -5,6 +5,7 @@ Cria uma aplicação web full-stack chamada A.S MUSIC, um projeto independente a
 OBJETIVO DO MVP: construir uma plataforma funcional de demonstração, não fingir que já tem catálogo licenciado, integrações de distribuição, pagamentos ou acordos com editoras. Não usar músicas comerciais protegidas. Qualquer faixa demonstrativa deve estar claramente identificada como demonstração e sem ficheiro de áudio real, até serem carregados conteúdos autorizados.
 
 PÁGINAS PÚBLICAS:
+
 - Início com hero A.S MUSIC, slogan, pesquisa, secções “Destaques”, “Lançamentos recentes”, “Artistas em destaque”, “Explorar por género”.
 - Explorar música com pesquisa/filtros por artista, título e géneros: Kizomba, Kuduro, Semba, Afro House, Rap, Gospel, Zouk e outros.
 - Catálogo, página de artista e página de faixa; player com estados visuais, mas só reproduzir quando existir ficheiro de áudio autorizado carregado.
@@ -12,6 +13,7 @@ PÁGINAS PÚBLICAS:
 - Contacto e CTA WhatsApp usando https://wa.me/244952958593 com texto pré-preenchido em português para o artista enviar dados/música.
 
 CONTAS E PERMISSÕES:
+
 - Autenticação segura para ouvintes/artistas e painel admin protegido por autorização real no backend/RLS, nunca apenas esconder botões no frontend.
 - Artistas podem criar conta, gerir o seu perfil e consultar apenas as próprias submissões e relatórios.
 - Artistas NÃO publicam diretamente. Cada submissão fica pendente e apenas administrador pode aprovar, rejeitar, editar, destacar ou remover.
@@ -21,14 +23,17 @@ CONTAS E PERMISSÕES:
 - Apenas admin pode alterar percentagens, estados de pagamento e dados financeiros. Não criar pagamento real nesta fase.
 
 MODELO FINANCEIRO INFORMATIVO:
+
 - Configuração inicial proposta: A.S MUSIC recebe 10% do valor que sobra após a comissão efetiva do distribuidor; artista recebe 90% desse valor. Deixar a comissão do distribuidor configurável e não assumir taxa. Mostrar exemplo calculado e rótulo “proposta sujeita a contrato”. Não afirmar que há receitas reais.
 - Relatórios financeiros com bruto, comissão do distribuidor, saldo após comissão, 10% A.S MUSIC, 90% artista, pendente/pago, sem simular transações reais. Marcar dados de demonstração.
 
 DIREITOS E DISTRIBUIÇÃO:
+
 - Separar claramente streaming/download na plataforma de distribuição para Spotify/Apple/Deezer/YouTube Music. Mostrar “Acordos e integrações em negociação / por confirmar”; não afirmar que existe parceiro ou licença. Catálogo amplo de música angolana só será integrado mediante autorização/licenciamento escrito dos titulares ou distribuidores.
 - Área admin para registar titular, território, modalidades (streaming/download), prazo, evidência/documento de licença e estado de verificação. Bloquear publicação e download quando autorização não estiver confirmada.
 
 QUALIDADE:
+
 - Design refinado e consistente em todas as páginas; navegação clara, acessibilidade, estados vazios, loading e erros; dados de exemplo identificados como demonstração; textos naturais em português de Angola.
 - Usar backend/database e autenticação disponíveis na stack Lovable quando possível. Criar esquema seguro e políticas de acesso. Nunca incluir credenciais secretas no código.
 - Criar conteúdo de demonstração sem artistas reais ou faixas protegidas.

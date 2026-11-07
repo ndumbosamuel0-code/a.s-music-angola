@@ -32,11 +32,19 @@ export function SiteHeader() {
   const authLinks = data?.user ? (
     <>
       {data.isAdmin && (
-        <Link to="/admin" className="text-sm text-gold hover:underline" onClick={() => setOpen(false)}>
+        <Link
+          to="/admin"
+          className="text-sm text-gold hover:underline"
+          onClick={() => setOpen(false)}
+        >
           Admin
         </Link>
       )}
-      <Link to="/painel" className="text-sm text-muted-foreground hover:text-foreground" onClick={() => setOpen(false)}>
+      <Link
+        to="/painel"
+        className="text-sm text-muted-foreground hover:text-foreground"
+        onClick={() => setOpen(false)}
+      >
         A minha conta
       </Link>
       <Button variant="silver" size="sm" onClick={signOut}>
@@ -45,7 +53,9 @@ export function SiteHeader() {
     </>
   ) : (
     <Button variant="gold" size="sm" asChild>
-      <Link to="/auth" onClick={() => setOpen(false)}>Entrar</Link>
+      <Link to="/auth" onClick={() => setOpen(false)}>
+        Entrar
+      </Link>
     </Button>
   );
 
@@ -55,13 +65,22 @@ export function SiteHeader() {
         <Logo />
         <nav className="hidden items-center gap-6 md:flex" aria-label="Principal">
           {NAV.map((n) => (
-            <Link key={n.to} to={n.to} className="text-sm text-muted-foreground hover:text-foreground" activeProps={{ className: "text-sm text-gold" }}>
+            <Link
+              key={n.to}
+              to={n.to}
+              className="text-sm text-muted-foreground hover:text-foreground"
+              activeProps={{ className: "text-sm text-gold" }}
+            >
               {n.label}
             </Link>
           ))}
         </nav>
         <div className="hidden items-center gap-3 md:flex">{authLinks}</div>
-        <button className="md:hidden" aria-label={open ? "Fechar menu" : "Abrir menu"} onClick={() => setOpen(!open)}>
+        <button
+          className="md:hidden"
+          aria-label={open ? "Fechar menu" : "Abrir menu"}
+          onClick={() => setOpen(!open)}
+        >
           {open ? <X /> : <Menu />}
         </button>
       </div>
@@ -86,21 +105,45 @@ export function SiteFooter() {
         <div className="space-y-2">
           <Logo />
           <p className="text-sm text-muted-foreground">{SLOGAN}</p>
-          <p className="text-xs text-muted-foreground">Projeto independente angolano em desenvolvimento.</p>
+          <p className="text-xs text-muted-foreground">
+            Projeto independente angolano em desenvolvimento.
+          </p>
         </div>
         <div className="flex flex-col gap-2 text-sm">
-          <Link to="/explorar" className="text-muted-foreground hover:text-foreground">Explorar música</Link>
-          <Link to="/artistas" className="text-muted-foreground hover:text-foreground">Artistas</Link>
-          <Link to="/para-artistas" className="text-muted-foreground hover:text-foreground">Para artistas</Link>
-          <Link to="/distribuicao" className="text-muted-foreground hover:text-foreground">Distribuição e direitos</Link>
-          <Link to="/contacto" className="text-muted-foreground hover:text-foreground">Contacto</Link>
+          <Link to="/explorar" className="text-muted-foreground hover:text-foreground">
+            Explorar música
+          </Link>
+          <Link to="/artistas" className="text-muted-foreground hover:text-foreground">
+            Artistas
+          </Link>
+          <Link to="/para-artistas" className="text-muted-foreground hover:text-foreground">
+            Para artistas
+          </Link>
+          <Link to="/distribuicao" className="text-muted-foreground hover:text-foreground">
+            Distribuição e direitos
+          </Link>
+          <Link to="/contacto" className="text-muted-foreground hover:text-foreground">
+            Contacto
+          </Link>
         </div>
         <div className="space-y-3 text-sm text-muted-foreground">
-          <p>Todo o conteúdo é publicado apenas com autorização dos titulares dos direitos. Faixas marcadas “Demo” são exemplos sem áudio.</p>
-          <a href={WHATSAPP_URL} target="_blank" rel="noreferrer" className="text-gold hover:underline">Falar no WhatsApp</a>
+          <p>
+            Todo o conteúdo é publicado apenas com autorização dos titulares dos direitos. Faixas
+            marcadas “Demo” são exemplos sem áudio.
+          </p>
+          <a
+            href={WHATSAPP_URL}
+            target="_blank"
+            rel="noreferrer"
+            className="text-gold hover:underline"
+          >
+            Falar no WhatsApp
+          </a>
         </div>
       </div>
-      <p className="pb-6 text-center text-xs text-muted-foreground">© {new Date().getFullYear()} A.S MUSIC</p>
+      <p className="pb-6 text-center text-xs text-muted-foreground">
+        © {new Date().getFullYear()} A.S MUSIC
+      </p>
     </footer>
   );
 }
