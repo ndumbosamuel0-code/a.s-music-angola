@@ -39,6 +39,14 @@ Deno.serve(async (req) => {
     return reply({ error: "The Premium product is not ready for checkout." }, 409);
   }
   const methodCode = body.payment_method === "reference" ? "payment_reference" : body.payment_method;
+
+  // Server-side allowlist: frontend filtering alone is not a security boundary.
+  // Keep empty until the bank/provider gives written approval for a specific channel.
+  const approvedMethods = new Set<string>([]);
+  if (!approvedMethods.has(methodCode)) {
+    return reply({ error: "This payment method is not approved for live checkout yet." }, 409);
+  }
+
   const { data: configured, error: methodError } = await admin.from("platform_payment_methods")
     .select("id,is_enabled,instructions").eq("method_code",methodCode).single();
   if (methodError || !configured?.is_enabled) return reply({ error: "This payment method is not enabled yet." }, 409);
