@@ -17,10 +17,34 @@ export const Route = createFileRoute("/para-artistas")({
 });
 
 const STEPS = [
-  { icon: UserPlus, t: "Cria a tua conta", d: "Registo gratuito planeado para artistas angolanos independentes." },
-  { icon: Upload, t: "Submete a tua faixa", d: "Título, género, capa, áudio, créditos e titulares dos direitos." },
-  { icon: ShieldCheck, t: "Revisão administrativa", d: "A equipa verifica direitos e qualidade. O envio não garante publicação." },
-  { icon: Globe2, t: "Publicação e futura distribuição", d: "Se aprovada, a faixa entra no catálogo. Distribuição externa ainda por confirmar." },
+  {
+    icon: UserPlus,
+    t: "Cria a tua conta",
+    d: "Regista-te gratuitamente para aceder à área de artista.",
+    action: "Criar conta ou entrar",
+    to: "/auth" as const,
+  },
+  {
+    icon: Upload,
+    t: "Submete a tua faixa",
+    d: "Preenche os dados da música e envia o áudio, a capa e os créditos.",
+    action: "Abrir formulário de submissão",
+    to: "/painel" as const,
+  },
+  {
+    icon: ShieldCheck,
+    t: "Revisão administrativa",
+    d: "A equipa verifica os direitos e a qualidade. Podes acompanhar o estado das tuas faixas na tua conta.",
+    action: "Acompanhar as minhas submissões",
+    to: "/painel" as const,
+  },
+  {
+    icon: Globe2,
+    t: "Publicação e futura distribuição",
+    d: "As faixas aprovadas podem entrar no catálogo. A distribuição externa ainda não está confirmada.",
+    action: "Consultar informações de distribuição",
+    to: "/distribuicao" as const,
+  },
 ];
 
 function Page() {
@@ -30,15 +54,17 @@ function Page() {
       <p className="mt-3 max-w-2xl text-muted-foreground">Leva o teu som mais longe. Submete a tua música com segurança — tu manténs os teus direitos e decides os usos que autorizas.</p>
       <div className="mt-10 grid gap-4 sm:grid-cols-2">
         {STEPS.map((s, i) => (
-          <div key={s.t} className="rounded-xl border border-border bg-card p-6">
+          <div key={s.t} className="flex flex-col rounded-xl border border-border bg-card p-6">
             <s.icon className="h-6 w-6 text-gold" aria-hidden="true" />
             <p className="mt-3 font-semibold">{i + 1}. {s.t}</p>
-            <p className="mt-1 text-sm text-muted-foreground">{s.d}</p>
+            <p className="mt-1 flex-1 text-sm text-muted-foreground">{s.d}</p>
+            <Button className="mt-5 w-full" variant={i === 0 || i === 1 ? "gold" : "silver"} asChild>
+              <Link to={s.to}>{s.action}</Link>
+            </Button>
           </div>
         ))}
       </div>
       <div className="mt-8 flex flex-wrap gap-3">
-        <Button variant="gold" asChild><Link to="/painel">Submeter música</Link></Button>
         <Button variant="silver" asChild><a href={WHATSAPP_URL} target="_blank" rel="noreferrer">Enviar dados por WhatsApp</a></Button>
       </div>
       <h2 className="mt-16 text-2xl font-bold">Modelo de partilha (informativo)</h2>
