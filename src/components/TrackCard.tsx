@@ -4,12 +4,25 @@ import type { TrackRow } from "@/lib/data";
 import { useSignedUrl } from "@/lib/data";
 import { Badge } from "./ui/badge";
 
-export function Cover({ path, title, className = "" }: { path: string | null; title: string; className?: string }) {
+export function Cover({
+  path,
+  title,
+  className = "",
+}: {
+  path: string | null;
+  title: string;
+  className?: string;
+}) {
   const { data: url } = useSignedUrl("covers", path);
   return (
     <div className={`relative overflow-hidden rounded-lg bg-secondary bg-hero ${className}`}>
       {url ? (
-        <img src={url} alt={`Capa de ${title}`} className="h-full w-full object-cover" loading="lazy" />
+        <img
+          src={url}
+          alt={`Capa de ${title}`}
+          className="h-full w-full object-cover"
+          loading="lazy"
+        />
       ) : (
         <div className="flex h-full w-full items-center justify-center">
           <Music2 className="h-1/3 w-1/3 text-gold/60" aria-hidden="true" />
@@ -20,13 +33,24 @@ export function Cover({ path, title, className = "" }: { path: string | null; ti
 }
 
 export function DemoBadge() {
-  return <Badge variant="outline" className="border-silver/40 text-[10px] uppercase tracking-wider text-silver">Demo</Badge>;
+  return (
+    <Badge
+      variant="outline"
+      className="border-silver/40 text-[10px] uppercase tracking-wider text-silver"
+    >
+      Demo
+    </Badge>
+  );
 }
 
 export function TrackCard({ track }: { track: TrackRow }) {
   return (
     <Link to="/faixa/$id" params={{ id: track.id }} className="group block space-y-2">
-      <Cover path={track.cover_url} title={track.title} className="aspect-square transition group-hover:shadow-gold" />
+      <Cover
+        path={track.cover_url}
+        title={track.title}
+        className="aspect-square transition group-hover:shadow-gold"
+      />
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
           <p className="truncate font-medium group-hover:text-gold">{track.title}</p>

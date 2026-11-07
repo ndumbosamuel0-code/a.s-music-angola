@@ -15,9 +15,16 @@ export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       { title: "A.S MUSIC — Onde o teu som chega mais longe." },
-      { name: "description", content: "Descobre música angolana independente: Kizomba, Kuduro, Semba, Afro House, Rap, Gospel e Zouk." },
+      {
+        name: "description",
+        content:
+          "Descobre música angolana independente: Kizomba, Kuduro, Semba, Afro House, Rap, Gospel e Zouk.",
+      },
       { property: "og:title", content: "A.S MUSIC — Onde o teu som chega mais longe." },
-      { property: "og:description", content: "Plataforma angolana independente de descoberta musical e submissão de músicas." },
+      {
+        property: "og:description",
+        content: "Plataforma angolana independente de descoberta musical e submissão de músicas.",
+      },
     ],
   }),
   component: Index,
@@ -34,12 +41,24 @@ function useTracks(key: string, build: (q: any) => any) {
   });
 }
 
-function Section({ title, to, children }: { title: string; to?: "/explorar" | "/artistas"; children: React.ReactNode }) {
+function Section({
+  title,
+  to,
+  children,
+}: {
+  title: string;
+  to?: "/explorar" | "/artistas";
+  children: React.ReactNode;
+}) {
   return (
     <section className="mx-auto max-w-6xl px-4 pt-14">
       <div className="mb-5 flex items-end justify-between">
         <h2 className="text-xl font-bold md:text-2xl">{title}</h2>
-        {to && <Link to={to} className="text-sm text-gold hover:underline">Ver tudo</Link>}
+        {to && (
+          <Link to={to} className="text-sm text-gold hover:underline">
+            Ver tudo
+          </Link>
+        )}
       </div>
       {children}
     </section>
@@ -48,11 +67,19 @@ function Section({ title, to, children }: { title: string; to?: "/explorar" | "/
 
 function TrackGrid({ q }: { q: ReturnType<typeof useTracks> }) {
   if (q.isLoading) return <TrackGridSkeleton />;
-  if (q.error) return <EmptyState title="Não foi possível carregar as faixas." text="Tenta novamente daqui a pouco." />;
+  if (q.error)
+    return (
+      <EmptyState
+        title="Não foi possível carregar as faixas."
+        text="Tenta novamente daqui a pouco."
+      />
+    );
   if (!q.data?.length) return <EmptyState title="Ainda não há faixas aqui." />;
   return (
     <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-      {q.data.map((t) => <TrackCard key={t.id} track={t} />)}
+      {q.data.map((t) => (
+        <TrackCard key={t.id} track={t} />
+      ))}
     </div>
   );
 }
@@ -66,7 +93,11 @@ function Index() {
   const artists = useQuery({
     queryKey: ["artists", "featured"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("artists").select("*").eq("featured", true).limit(6);
+      const { data, error } = await supabase
+        .from("artists")
+        .select("*")
+        .eq("featured", true)
+        .limit(6);
       if (error) throw error;
       return data;
     },
@@ -95,30 +126,62 @@ function Index() {
             }}
             role="search"
           >
-            <label htmlFor="hero-search" className="sr-only">Pesquisar música</label>
-            <Input id="hero-search" value={term} onChange={(e) => setTerm(e.target.value)} placeholder="Pesquisar artista ou título…" className="h-11 bg-card/80" />
-            <Button type="submit" variant="gold" className="h-11"><Search /> Pesquisar</Button>
+            <label htmlFor="hero-search" className="sr-only">
+              Pesquisar música
+            </label>
+            <Input
+              id="hero-search"
+              value={term}
+              onChange={(e) => setTerm(e.target.value)}
+              placeholder="Pesquisar artista ou título…"
+              className="h-11 bg-card/80"
+            />
+            <Button type="submit" variant="gold" className="h-11">
+              <Search /> Pesquisar
+            </Button>
           </form>
           <div className="mt-6 flex flex-wrap gap-3">
-            <Button variant="silver" asChild><Link to="/para-artistas">Sou artista</Link></Button>
-            <Button variant="ghost" asChild><a href={WHATSAPP_URL} target="_blank" rel="noreferrer">Enviar música por WhatsApp</a></Button>
+            <Button variant="silver" asChild>
+              <Link to="/para-artistas">Sou artista</Link>
+            </Button>
+            <Button variant="ghost" asChild>
+              <a href={WHATSAPP_URL} target="_blank" rel="noreferrer">
+                Enviar música por WhatsApp
+              </a>
+            </Button>
           </div>
         </div>
       </section>
 
-      <Section title="Destaques" to="/explorar"><TrackGrid q={featured} /></Section>
-      <Section title="Lançamentos recentes" to="/explorar"><TrackGrid q={recent} /></Section>
+      <Section title="Destaques" to="/explorar">
+        <TrackGrid q={featured} />
+      </Section>
+      <Section title="Lançamentos recentes" to="/explorar">
+        <TrackGrid q={recent} />
+      </Section>
 
       <Section title="Artistas em destaque" to="/artistas">
-        {artists.isLoading ? <TrackGridSkeleton n={3} /> : !artists.data?.length ? <EmptyState title="Sem artistas em destaque." /> : (
+        {artists.isLoading ? (
+          <TrackGridSkeleton n={3} />
+        ) : !artists.data?.length ? (
+          <EmptyState title="Sem artistas em destaque." />
+        ) : (
           <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-5">
             {artists.data.map((a) => (
-              <Link key={a.id} to="/artista/$slug" params={{ slug: a.slug }} className="group rounded-xl border border-border bg-card p-4 text-center hover:border-gold/50">
+              <Link
+                key={a.id}
+                to="/artista/$slug"
+                params={{ slug: a.slug }}
+                className="group rounded-xl border border-border bg-card p-4 text-center hover:border-gold/50"
+              >
                 <div className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-gold-gradient font-display text-xl text-primary-foreground">
                   {a.name.replace(/Demo /, "").charAt(0)}
                 </div>
                 <p className="truncate font-medium group-hover:text-gold">{a.name}</p>
-                <p className="text-xs text-muted-foreground">{a.province}{a.is_demo && " · Demo"}</p>
+                <p className="text-xs text-muted-foreground">
+                  {a.province}
+                  {a.is_demo && " · Demo"}
+                </p>
               </Link>
             ))}
           </div>
@@ -128,7 +191,12 @@ function Index() {
       <Section title="Explorar por género">
         <div className="flex flex-wrap gap-3">
           {genres.data?.map((g) => (
-            <Link key={g.id} to="/explorar" search={{ genero: g.slug }} className="rounded-full border border-border bg-card px-5 py-2.5 text-sm hover:border-gold hover:text-gold">
+            <Link
+              key={g.id}
+              to="/explorar"
+              search={{ genero: g.slug }}
+              className="rounded-full border border-border bg-card px-5 py-2.5 text-sm hover:border-gold hover:text-gold"
+            >
               {g.name}
             </Link>
           ))}
@@ -137,7 +205,9 @@ function Index() {
 
       <section className="mx-auto mt-16 max-w-6xl px-4">
         <p className="rounded-lg border border-border bg-card p-4 text-xs text-muted-foreground">
-          Nota: todas as faixas e artistas marcados “Demo” são conteúdo fictício de demonstração, sem ficheiro de áudio. A A.S MUSIC ainda não tem catálogo licenciado nem acordos de distribuição confirmados.
+          Nota: todas as faixas e artistas marcados “Demo” são conteúdo fictício de demonstração,
+          sem ficheiro de áudio. A A.S MUSIC ainda não tem catálogo licenciado nem acordos de
+          distribuição confirmados.
         </p>
       </section>
     </>

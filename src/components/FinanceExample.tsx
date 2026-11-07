@@ -20,17 +20,44 @@ export function FinanceExample() {
   ] as const;
   return (
     <div className="rounded-xl border border-gold/30 bg-card p-6">
-      <p className="mb-4 inline-block rounded-full bg-warning/15 px-3 py-1 text-xs font-medium text-warning">Proposta sujeita a contrato · exemplo ilustrativo</p>
+      <p className="mb-4 inline-block rounded-full bg-warning/15 px-3 py-1 text-xs font-medium text-warning">
+        Proposta sujeita a contrato · exemplo ilustrativo
+      </p>
       <div className="grid gap-4 sm:grid-cols-2">
-        <div className="space-y-1"><Label htmlFor="g">Valor bruto de exemplo (Kz)</Label><Input id="g" type="number" min={0} value={gross} onChange={(e) => setGross(Number(e.target.value) || 0)} /></div>
-        <div className="space-y-1"><Label htmlFor="p">Comissão do distribuidor (%) — por definir</Label><Input id="p" type="number" min={0} max={100} value={distributorPct} onChange={(e) => setPct(Number(e.target.value) || 0)} /></div>
+        <div className="space-y-1">
+          <Label htmlFor="g">Valor bruto de exemplo (Kz)</Label>
+          <Input
+            id="g"
+            type="number"
+            min={0}
+            value={gross}
+            onChange={(e) => setGross(Number(e.target.value) || 0)}
+          />
+        </div>
+        <div className="space-y-1">
+          <Label htmlFor="p">Comissão do distribuidor (%) — por definir</Label>
+          <Input
+            id="p"
+            type="number"
+            min={0}
+            max={100}
+            value={distributorPct}
+            onChange={(e) => setPct(Number(e.target.value) || 0)}
+          />
+        </div>
       </div>
       <dl className="mt-6 divide-y divide-border">
         {rows.map(([k, v]) => (
-          <div key={k} className="flex justify-between py-2 text-sm"><dt className="text-muted-foreground">{k}</dt><dd className="font-medium">{formatKz(v)}</dd></div>
+          <div key={k} className="flex justify-between py-2 text-sm">
+            <dt className="text-muted-foreground">{k}</dt>
+            <dd className="font-medium">{formatKz(v)}</dd>
+          </div>
         ))}
       </dl>
-      <p className="mt-4 text-xs text-muted-foreground">A comissão efetiva do distribuidor ainda não está definida. Nenhum valor aqui representa receita real.</p>
+      <p className="mt-4 text-xs text-muted-foreground">
+        A comissão efetiva do distribuidor ainda não está definida. Nenhum valor aqui representa
+        receita real.
+      </p>
     </div>
   );
 }

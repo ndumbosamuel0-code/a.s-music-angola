@@ -1,6 +1,7 @@
 # Preparação da distribuição digital — A.S MUSIC ANGOLA
 
 ## Estado confirmado
+
 - O projeto usa Supabase no projeto `hvwubckihjuljlhgaial`.
 - Existem tabelas de artistas, faixas, licenças, utilizadores, funções de pagamento e candidaturas de distribuidoras.
 - Os ficheiros de áudio e documentos de licenças estão em armazenamento privado.
@@ -9,9 +10,11 @@
 - A plataforma ainda não tem credenciais de API nem confirmação de contrato de distribuição.
 
 ## Decisão técnica recomendada
+
 Implementar a integração como uma camada server-side independente do frontend. O navegador nunca deve comunicar diretamente com a API do parceiro nem receber tokens, client secrets ou service-role keys.
 
 ### Fluxo proposto
+
 1. O artista submete áudio, capa, metadados, créditos e confirmação dos direitos.
 2. A equipa administrativa verifica a faixa e a licença/documentação.
 3. A aprovação interna não significa envio automático: a faixa só entra na fila externa quando o administrador a marcar para distribuição.
@@ -22,6 +25,7 @@ Implementar a integração como uma camada server-side independente do frontend.
 8. O artista vê o estado por loja, erros corrigíveis e histórico. Não vê tokens nem dados internos do parceiro.
 
 ## Estados a suportar
+
 - Internos: `pending_review`, `needs_changes`, `approved`, `rejected`, `rights_blocked`.
 - Distribuição: `queued`, `submitting`, `submitted`, `processing`, `delivered`, `partially_delivered`, `failed`, `withdrawal_requested`, `withdrawn`.
 - Estado por DSP: `pending`, `processing`, `live`, `rejected`, `takedown_pending`, `taken_down`, `unknown`.
@@ -29,6 +33,7 @@ Implementar a integração como uma camada server-side independente do frontend.
 Os estados externos devem guardar também o código/mensagem original do parceiro, timestamp da última atualização e identificador externo. Não transformar um estado desconhecido em sucesso.
 
 ## Estrutura de dados a criar numa migração versionada
+
 A implementação deverá criar tabelas separadas, sem substituir nem reescrever as tabelas existentes:
 
 - `distribution_partners`: nome, estado de configuração, ambiente (sandbox/produção), capacidades e lista de DSPs contratadas. Sem guardar segredos nesta tabela.
@@ -40,6 +45,7 @@ A implementação deverá criar tabelas separadas, sem substituir nem reescrever
 Todas as tabelas devem ter RLS ativa. Artistas só podem consultar lançamentos ligados às próprias faixas; distribuidores só os lançamentos atribuídos à sua conta, se esse papel for usado; administrador principal pode gerir e consultar tudo. Escritas de estados externos devem ocorrer apenas por funções server-side com validação de assinatura e autorização.
 
 ## Edge Functions previstas
+
 1. `distribution-submit`: JWT obrigatório; confirmar utilizador e papel de administrador; verificar faixa aprovada, licença verificada e direitos; enviar para o parceiro usando segredos server-side; nunca aceitar do cliente o estado final ou o ID externo.
 2. `distribution-webhook`: endpoint sem JWT de utilizador apenas se o parceiro exigir webhooks públicos; validar assinatura HMAC/token do parceiro antes de aceitar qualquer evento; rejeitar eventos repetidos.
 3. `distribution-reconcile`: execução protegida por segredo de cron; consultar estados pendentes e corrigir eventos perdidos.
@@ -47,6 +53,7 @@ Todas as tabelas devem ter RLS ativa. Artistas só podem consultar lançamentos 
 As funções não devem ser implementadas com permissões abertas. A função de webhook não pode confiar em payload sem assinatura validada. Não fazer deploy até o contrato e o formato de autenticação do parceiro serem confirmados.
 
 ## Segredos necessários — preencher apenas após onboarding
+
 - URL/API base fornecida pelo parceiro.
 - Credencial de sandbox.
 - Credencial de produção, separada da sandbox.
@@ -58,6 +65,7 @@ As funções não devem ser implementadas com permissões abertas. A função de
 Guardar tudo em Supabase Edge Function Secrets ou mecanismo equivalente de segredos do servidor. Nunca colocar em `VITE_*`, `NEXT_PUBLIC_*`, código React, tabelas públicas ou mensagens de chat.
 
 ## Critérios de aceitação antes de ativar produção
+
 - Teste de autorização: artista não consegue aprovar nem enviar a faixa de outro artista.
 - Teste de direitos: faixa sem licença verificada não pode ser enviada.
 - Teste de repetição: duplo clique/retry não cria dois lançamentos no parceiro.
@@ -68,7 +76,9 @@ Guardar tudo em Supabase Edge Function Secrets ou mecanismo equivalente de segre
 - Teste de recuperação: timeout não perde o identificador/idempotency key nem duplica o lançamento.
 
 ## Dependências comerciais e operacionais
+
 A integração real permanece bloqueada até receber resposta formal do parceiro, confirmar onboarding, contrato, custos, territórios, DSPs habilitadas, documentação API e acesso a sandbox. “Todas as lojas” significa todas as lojas incluídas no contrato e habilitadas para a conta A.S MUSIC ANGOLA — não todas as lojas existentes no mercado.
 
 ## Proteção do que já existe
+
 Esta preparação é documental. Não altera a conta do administrador principal, tabelas, políticas RLS, dados de utilizadores, pagamentos ou configurações de produção. A migração e as funções devem ser revistas e testadas em ambiente de desenvolvimento antes de qualquer aplicação em produção.
