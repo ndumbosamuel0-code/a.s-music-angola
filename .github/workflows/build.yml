@@ -1,4 +1,4 @@
-name: Build check
+name: Build and quality checks
 
 on:
   push:
@@ -6,8 +6,15 @@ on:
   pull_request:
     branches: [main]
 
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  build:
+  quality:
     runs-on: ubuntu-latest
     env:
       VITE_SUPABASE_URL: https://example.supabase.co
@@ -19,5 +26,9 @@ jobs:
         uses: oven-sh/setup-bun@v2
       - name: Install dependencies
         run: bun install --frozen-lockfile
+      - name: Lint
+        run: bun run lint
+      - name: Tests
+        run: bun run test
       - name: Build application
         run: bun run build
