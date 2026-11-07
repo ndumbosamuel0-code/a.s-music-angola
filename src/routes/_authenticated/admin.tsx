@@ -31,7 +31,7 @@ export const Route = createFileRoute("/_authenticated/admin")({
 });
 
 const STATUS: Record<string, string> = { pending: "Pendente", approved: "Aprovada", rejected: "Rejeitada", removed: "Removida" };
-const ADMIN_TABS: [string, string][] = [["geral", "Visão geral"], ["pendentes", "Pendentes"], ["catalogo", "Catálogo"], ["artistas", "Artistas"], ["generos", "Géneros"], ["direitos", "Direitos/licenças"], ["relatorios", "Relatórios"], ["definicoes", "Definições"]];
+const ADMIN_TABS: [string, string][] = [["geral", "Visão geral"], ["pendentes", "Pendentes"], ["catalogo", "Catálogo"], ["artistas", "Artistas"], ["generos", "Géneros"], ["direitos", "Direitos/licenças"], ["relatorios", "Relatórios"], ["administradores", "Administradores"], ["definicoes", "Definições"]];
 const sel = "h-9 rounded-md border border-input bg-background px-2 text-sm";
 
 function useAdmin<T>(key: string, fn: () => PromiseLike<{ data: T | null; error: unknown }>) {
@@ -57,6 +57,7 @@ function Admin() {
         <TabsContent value="generos"><GenresAdmin /></TabsContent>
         <TabsContent value="direitos"><LicensesAdmin /></TabsContent>
         <TabsContent value="relatorios"><ReportsAdmin /></TabsContent>
+        <TabsContent value="administradores"><AdminsAdmin /></TabsContent>
         <TabsContent value="definicoes"><SettingsAdmin /></TabsContent>
       </Tabs>
     </div>
@@ -86,6 +87,77 @@ function Overview() {
       {items.map(([l, v]) => (
         <div key={l as string} className="rounded-xl border border-border bg-card p-5"><p className="text-sm text-muted-foreground">{l}</p><p className="mt-2 font-display text-3xl text-gold">{v ?? "—"}</p></div>
       ))}
+    </div>
+  );
+}
+
+function AdminsAdmin() {
+  const refresh = useRefresh();
+  const profiles = useAdmin<{ id: string; display_name: string | null; full_name: string | null; email: string | null }[]>(
+    "admin-candidates",
+    () => supabase.from("profiles").select("id,display_name,full_name,email").order("display_name")
+  );
+  const roles = useAdmin<{ user_id: string; role: string }[]>(
+    "admin-roles",
+    () => supabase.from("user_roles").select("user_id,role")
+  );
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => setCurrentUserId(data.user?.id ?? null));
+  }, []);
+
+  async function grantAdmin(userId: string) {
+    const { error } = await supabase.from("user_roles").insert({ user_id: userId, role: "admin" });
+    err(error, "Acesso de administrador concedido.");
+    refresh();
+  }
+  async function revokeAdmin(userId: string) {
+    if (userId === currentUserId) {
+      toast.error("Não podes retirar o teu próprio acesso nesta sessão.");
+      return;
+    }
+    if (!confirm("Retirar o acesso de administrador desta conta?")) return;
+    const { error } = await supabase.from("user_roles").delete().eq("user_id", userId).eq("role", "admin");
+    err(error, "Acesso de administrador removido.");
+    refresh();
+  }
+
+  const adminIds = new Set((roles.data ?? []).filter((r) => r.role === "admin").map((r) => r.user_id));
+  return (
+    <div className="mt-4 space-y-4">
+      <div className="rounded-xl border border-border bg-card p-4">
+        <h2 className="font-bold">Gerir administradores</h2>
+        <p className="mt-1 text-sm text-muted-foreground">Concede ou retira acesso administrativo a contas já registadas. Por segurança, apenas administradores atuais podem usar esta área.</p>
+      </div>
+      {profiles.isLoading || roles.isLoading ? (
+        <div className="h-24 animate-pulse rounded-xl bg-secondary" />
+      ) : !profiles.data?.length ? (
+        <EmptyState title="Nenhuma conta registada encontrada." />
+      ) : (
+        <div className="space-y-2">
+          {profiles.data.map((p) => {
+            const isAdmin = adminIds.has(p.id);
+            const label = p.full_name || p.display_name || p.email || p.id.slice(0, 8);
+            return (
+              <div key={p.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border bg-card p-4">
+                <div className="min-w-0">
+                  <p className="font-medium">{label}</p>
+                  <p className="text-xs text-muted-foreground">{p.email || "Email não disponível"} · ID {p.id.slice(0, 8)}</p>
+                </div>
+                {isAdmin ? (
+                  <div className="flex items-center gap-2">
+                    <Badge>Administrador</Badge>
+                    <Button size="sm" variant="ghost" disabled={p.id === currentUserId} onClick={() => revokeAdmin(p.id)}>Retirar acesso</Button>
+                  </div>
+                ) : (
+                  <Button size="sm" variant="gold" onClick={() => grantAdmin(p.id)}>Adicionar como admin</Button>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+      <p className="text-xs text-muted-foreground">Só aparecem contas que já criaram uma conta na plataforma. O teu próprio acesso fica protegido nesta sessão.</p>
     </div>
   );
 }
