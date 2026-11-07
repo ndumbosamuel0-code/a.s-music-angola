@@ -65,3 +65,6 @@ Distinguir sempre: preparado, testado, aprovado por fornecedor, implantado em pr
 - A primeira execução do workflow ampliado falhou no passo de lint com 1.417 ocorrências reportadas, maioritariamente regras de formatação `prettier/prettier`; por consequência, testes e build foram ignorados nessa execução.
 - O workflow foi ajustado para separar as regras ESLint de correcção do código da regra de formatação Prettier preexistente. A formatação continua a ser dívida técnica e não é declarada resolvida.
 - É necessária uma nova execução completa de lint, testes e build depois desta alteração; até existir resultado verde, a qualidade da release permanece pendente.
+
+## Decisão sobre a regra de formatação
+A tentativa de excluir a regra Prettier do lint foi revertida. A verificação de release mantém o lint completo, incluindo formatação; não é aceitável ocultar os erros para produzir um CI aparentemente verde. O relatório de CI registou 1.417 ocorrências, principalmente `prettier/prettier`, e não foi possível aplicar automaticamente uma reformatação persistente a todo o repositório através da integração GitHub disponível nesta sessão. O lint completo deve continuar bloqueante até o código ser formatado e os testes/build passarem.
