@@ -13,7 +13,9 @@ type Order = { id: string; amount: number; currency: string; status: string; pay
 type Thread = { id: string; payment_order_id: string | null; payment_status: string; created_at: string };
 type Message = { id: string; sender_id: string; body: string | null; attachment_path: string | null; message_type: string; created_at: string };
 
-// Lista vazia até aprovação escrita. Activar apenas os canais autorizados pelo banco/prestador.\nconst APPROVED_PAYMENT_METHODS: string[] = [];\nconst methodLabels: Record<string,string> = { multicaixa_express: "Multicaixa Express", bank_transfer: "Transferência bancária", payment_reference: "Pagamento por referência", unitel_money: "UNITEL Money" };
+// Lista vazia até aprovação escrita. Activar apenas os canais autorizados pelo banco/prestador.
+const APPROVED_PAYMENT_METHODS: string[] = [];
+const methodLabels: Record<string,string> = { multicaixa_express: "Multicaixa Express", bank_transfer: "Transferência bancária", payment_reference: "Pagamento por referência", unitel_money: "UNITEL Money" };
 const instructionLabels: Record<string,string> = {
   phone: "Número de pagamento",
   account_holder: "Titular da conta",
