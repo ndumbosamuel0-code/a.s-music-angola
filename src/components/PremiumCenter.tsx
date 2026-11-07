@@ -30,12 +30,23 @@ export function PremiumCenter({ userId }: { userId: string }) {
     queryFn: async () => {
       const db = supabase as any;
       const { data, error } = await db.from("artist_premium_subscriptions").select("id,status,starts_at,ends_at")
-        .eq("user_id", userId).eq("status","active").gt("ends_at", new Date().toISOString())
+        .eq("user_id", userId)
         .order("ends_at",{ascending:false}).limit(1).maybeSingle();
       if (error) throw error;
       return data;
     },
     refetchInterval: 30_000,
+  });
+  const trackStats = useQuery({
+    queryKey: ["premium-track-stats", userId],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("tracks").select("id,status,created_at").eq("submitted_by", userId);
+      if (error) throw error;
+      const rows = data ?? [];
+      return { total: rows.length, approved: rows.filter(x => x.status === "approved").length, pending: rows.filter(x => x.status === "pending").length, rejected: rows.filter(x => x.status === "rejected").length };
+    },
+    enabled: !!subscription.data && subscription.data.status === "active" && new Date(subscription.data.ends_at).getTime() > Date.now(),
+    refetchInterval: 60_000,
   });
   const methods = useQuery({
     queryKey: ["premium-payment-methods"],
@@ -131,7 +142,8 @@ export function PremiumCenter({ userId }: { userId: string }) {
     else if (data?.signedUrl) window.open(data.signedUrl,"_blank","noopener,noreferrer");
   }
 
-  const active = !!subscription.data;
+  const active = !!subscription.data && subscription.data.status === "active" && new Date(subscription.data.ends_at).getTime() > Date.now();
+  const expired = !!subscription.data && !active;
   return <div className="mt-4 space-y-5">
     <section className="overflow-hidden rounded-2xl border border-gold/40 bg-gradient-to-br from-card via-card to-gold/10 p-5 sm:p-7">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -142,10 +154,12 @@ export function PremiumCenter({ userId }: { userId: string }) {
       </div>
       <div className="mt-5 grid gap-3 sm:grid-cols-2">
         {[
-          ["Selo Premium","Identificação Premium na tua área de artista."],
+          ["Selo Premium","Identificação Premium na tua área de artista durante a subscrição."],
+          ["Análise prioritária","As tuas faixas aparecem primeiro na fila de revisão administrativa; direitos e licenças continuam obrigatórios."],
+          ["Estatísticas de carreira","Resumo do total de faixas, aprovadas, pendentes e rejeitadas."],
           ["Apoio prioritário","Chat individual com a administração para pagamentos e assistência."],
-          ["Gestão do plano","Estado, validade e histórico dos teus pedidos num só lugar."],
-          ["Submissões acompanhadas","Acompanha o estado das faixas submetidas na tua conta."],
+          ["Acompanhamento de lançamentos","Consulta o progresso das tuas submissões e o histórico dos pedidos."],
+          ["Renovação sem perder dias","Se renovares antes do fim, os novos 30 dias são acrescentados ao período activo."],
         ].map(([title,desc])=><div key={title} className="rounded-xl border border-border/70 bg-background/60 p-3"><div className="flex items-center gap-2 font-medium"><Sparkles className="h-4 w-4 text-gold"/>{title}</div><p className="mt-1 text-xs text-muted-foreground">{desc}</p></div>)}
       </div>
       <div className="mt-5 flex flex-wrap items-center gap-3">
@@ -154,7 +168,8 @@ export function PremiumCenter({ userId }: { userId: string }) {
       </div>
     </section>
 
-    {active && <section className="rounded-xl border border-emerald-600/30 bg-emerald-600/5 p-4"><div className="flex items-center gap-2 font-semibold"><BadgeCheck className="h-5 w-5 text-emerald-600"/> A tua conta tem Premium activo</div><p className="mt-1 text-sm text-muted-foreground">As vantagens Premium estão disponíveis até {expiry}. A renovação é manual.</p></section>}
+    {active && <section className="space-y-3 rounded-xl border border-emerald-600/30 bg-emerald-600/5 p-4"><div className="flex items-center gap-2 font-semibold"><BadgeCheck className="h-5 w-5 text-emerald-600"/> A tua conta tem Premium activo</div><p className="text-sm text-muted-foreground">As vantagens Premium estão disponíveis até {expiry}. A renovação é manual.</p><div className="grid grid-cols-2 gap-2 sm:grid-cols-4">{[["Submissões",trackStats.data?.total],["Aprovadas",trackStats.data?.approved],["Pendentes",trackStats.data?.pending],["Rejeitadas",trackStats.data?.rejected]].map(([label,value])=><div key={String(label)} className="rounded-lg border bg-background/70 p-3"><p className="text-xl font-bold tabular-nums">{trackStats.isLoading?"—":value}</p><p className="text-xs text-muted-foreground">{label}</p></div>)}</div></section>}
+    {expired && <section className="rounded-xl border border-border bg-muted/40 p-4"><p className="font-semibold">O teu Premium terminou</p><p className="mt-1 text-sm text-muted-foreground">A tua conta voltou automaticamente ao plano normal. As tuas músicas, perfil e histórico continuam na tua conta. Se quiseres, podes renovar o Premium por mais 30 dias.</p></section>}
 
     {!active && <section className="rounded-xl border border-border bg-card p-5 space-y-3">
       <h3 className="font-semibold">Activar Premium</h3>
